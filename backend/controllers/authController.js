@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 // 用户注册
 exports.register = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, have_shop } = req.body;
 
         // 检查用户是否已存在
         const userExists = await pool.query(
@@ -23,15 +23,15 @@ exports.register = async (req, res) => {
 
         // 插入新用户
         const result = await pool.query(
-            'INSERT INTO Account (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email',
-            [username, email, hashedPassword]
+            'INSERT INTO Account (username, password, email, have_shop) VALUES ($1, $2, $3, $4) RETURNING account_id, username, email, have_shop',
+            [username, hashedPassword, email, have_shop]
         );
 
         const user = result.rows[0];
 
         // 生成 JWT Token
         const token = jwt.sign(
-            { id: user.id, username: user.username },
+            { account_id: user.account_id, username: user.username },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRE }
         );
@@ -40,9 +40,10 @@ exports.register = async (req, res) => {
             success: true,
             token,
             user: {
-                id: user.id,
+                account_id: user.account_id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                have_shop: user.have_shop
             }
         });
     } catch (error) {
@@ -77,18 +78,16 @@ exports.login = async (req, res) => {
 
         // 生成 JWT Token
         const token = jwt.sign(
-            { id: user.id, username: user.username },
+            { id: user.account_id, username: user.username },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRE }
         );
-
-        console.log('生成的 JWT Token:', token);//debug
 
         res.json({
             success: true,
             token,
             userInfo: {
-                id: user.id,
+                id: user.account_id,
                 username: user.username,
                 email: user.email
             }

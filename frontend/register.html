@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title> REGISTER | E-COMMERCE WEBSITE </title>
+    <!-- favicon -->
+    <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16">
+    <!-- fontawesome -->
+    <script src="https://kit.fontawesome.com/b921c4663e.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <div id="1"></div>
+    <script>
+        load("header.html");
+        function load(url)
+        {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(1).innerHTML = req.responseText;
+        }
+    </script>
+
+    <!-- REGISTER CONTAINER -->
+    <div id="registerContainer">
+        <div id="registerBox">
+            <h1>注册</h1>
+            <form id="registerForm">
+                <div class="inputGroup">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" placeholder="用户名" required minlength="3" maxlength="50">
+                    <small class="hint">用户名长度为 3-50 个字符</small>
+                </div>
+                <div class="inputGroup">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="邮箱" required>
+                    <small class="hint">请输入有效的邮箱地址</small>
+                </div>
+                <div class="inputGroup">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="密码" required minlength="6">
+                    <small class="hint">密码至少 6 个字符</small>
+                </div>
+                <div class="inputGroup">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="confirmPassword" placeholder="确认密码" required>
+                    <small class="hint">请再次输入密码</small>
+                </div>
+                <div class="checkboxGroup">
+                    <input type="checkbox" id="haveShop">
+                    <label for="haveShop">我想开设店铺</label>
+                </div>
+                <div class="checkboxGroup">
+                    <input type="checkbox" id="agree" required>
+                    <label for="agree">我已阅读并同意 <a href="#">服务条款</a> 和 <a href="#">隐私政策</a></label>
+                </div>
+                <button type="submit">注册</button>
+                <div class="links">
+                    <span>已有账号?</span>
+                    <a href="login.html">立即登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div id="4"></div>
+    <script>
+        load("footer.html");
+        function load(url)
+        {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(4).innerHTML = req.responseText;
+        }
+    </script>
+
+    <script src="register.js"></script>
+</body>
+</html>

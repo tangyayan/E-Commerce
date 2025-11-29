@@ -22,6 +22,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             const storage = remember ? localStorage : sessionStorage;//session临时会话
             storage.setItem('userToken', data.token);//保存jwt
             storage.setItem('userInfo', JSON.stringify(data.userInfo));
+            console.log('登录成功,用户信息:', data.userInfo);
             
             // 登录成功后跳转
             window.location.href = 'index.html';
