@@ -1,0 +1,9 @@
+-- 创建用户表
+CREATE TABLE IF NOT EXISTS Account (
+    account_id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    have_shop BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

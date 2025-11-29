@@ -1,28 +1,35 @@
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const remember = document.getElementById('remember').checked;
     
-    // 这里应该调用后端API进行验证
-    // 目前使用模拟登录
-    if (username && password) {
-        const userToken = 'mock_token_' + Date.now();
-        const userInfo = JSON.stringify({
-            username: username,
-            loginTime: new Date().toISOString()
+    try {
+        // 调用后端 API
+        const response = await fetch('http://localhost:3000/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
         });
         
-        if (remember) {
-            localStorage.setItem('userToken', userToken);
-            localStorage.setItem('userInfo', userInfo);
-        } else {
-            sessionStorage.setItem('userToken', userToken);
-            sessionStorage.setItem('userInfo', userInfo);
-        }
+        const data = await response.json();
         
-        // 登录成功后跳转到用户页面
-        window.location.href = 'user.html';
+        if (data.success) {
+            // 存储 token 和用户信息
+            const storage = remember ? localStorage : sessionStorage;//session临时会话
+            storage.setItem('userToken', data.token);//保存jwt
+            storage.setItem('userInfo', JSON.stringify(data.userInfo));
+            
+            // 登录成功后跳转
+            window.location.href = 'index.html';
+        } else {
+            alert(data.message || '登录失败');
+        }
+    } catch (error) {
+        console.error('登录错误:', error);
+        alert('登录失败,请稍后重试');
     }
 });

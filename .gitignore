@@ -1,0 +1,113 @@
+# ==================== Node.js ====================
+# 依赖目录
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# package-lock 文件
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ==================== 环境变量 ====================
+# 包含敏感信息，不应提交
+.env
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# ==================== 日志文件 ====================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ==================== 操作系统文件 ====================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ==================== 编辑器和 IDE ====================
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# JetBrains IDEs (WebStorm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ==================== 测试和覆盖率 ====================
+coverage/
+*.lcov
+.nyc_output/
+
+# ==================== 构建输出 ====================
+dist/
+build/
+out/
+*.tgz
+
+# ==================== 数据库 ====================
+# 数据库备份文件
+*.sql.backup
+*.db
+*.sqlite
+*.sqlite3
+
+# ==================== 临时文件 ====================
+tmp/
+temp/
+*.tmp
+*.bak
+*.cache
+
+# ==================== 上传文件 ====================
+# 用户上传的文件（根据需要调整）
+uploads/
+public/uploads/
+
+# ==================== 其他 ====================
+# 证书和密钥文件
+*.pem
+*.key
+*.cert
+*.crt
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
