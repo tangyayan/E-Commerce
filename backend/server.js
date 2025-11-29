@@ -13,11 +13,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // 路由
 const authRoutes = require('./routes/auth');
-//const productRoutes = require('./routes/products');
+const productRoutes = require('./routes/products');
 //const orderRoutes = require('./routes/orders');
 
 app.use('/api/auth', authRoutes);
-//app.use('/api/products', productRoutes);
+app.use('/api/products', productRoutes);
 //app.use('/api/orders', orderRoutes);
 
 // 测试路由

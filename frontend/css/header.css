@@ -107,6 +107,17 @@ body
     color: rgb(29, 29, 29)
 }
 
+#signOutIcon {
+    font-size: 35px;
+    color: #333;
+    margin-left: 15px;
+    transition: color 0.3s;
+}
+
+#signOutIcon:hover {
+    color: #555;
+}
+
 /* ----------------------------- MEDIA QUERY --------------------------- */
 
 @media(max-width: 1300px)

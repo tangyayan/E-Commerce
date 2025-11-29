@@ -134,3 +134,76 @@ h2
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* 加载提示 */
+.loading {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+    color: #666;
+}
+
+/* 错误信息 */
+.error-message {
+    text-align: center;
+    padding: 40px;
+    color: #e74c3c;
+}
+
+.error-message button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.error-message button:hover {
+    background-color: #555;
+}
+
+/* 暂无商品 */
+.no-products {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #999;
+}
+
+/* 商品卡片 */
+.product-box {
+    position: relative;
+    margin: 10px;
+}
+
+.product-details {
+    padding: 10px;
+}
+
+/* 价格信息 */
+.price-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 14px;
+}
+
+.current-price {
+    color: #e74c3c;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* 库存信息 */
+.stock-info {
+    font-size: 12px;
+    color: #666;
+}
