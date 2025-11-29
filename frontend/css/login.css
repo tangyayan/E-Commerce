@@ -1,0 +1,130 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: #f5f5f5;
+}
+
+#loginContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 200px);
+    padding: 20px;
+    padding-top: 100px;
+}
+
+#loginBox {
+    background-color: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+#loginBox h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+    font-size: 28px;
+    font-weight: 400;
+}
+
+.inputGroup {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.inputGroup i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.inputGroup input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Lato', sans-serif;
+    transition: border-color 0.3s;
+}
+
+.inputGroup input:focus {
+    outline: none;
+    border-color: #333;
+}
+
+.rememberMe {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.rememberMe input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.rememberMe label {
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-family: 'Lato', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button[type="submit"]:hover {
+    background-color: #555;
+}
+
+.links {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.links a {
+    font-size: 14px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.links a:hover {
+    color: #333;
+}
+
+@media (max-width: 500px) {
+    #loginBox {
+        padding: 30px 20px;
+    }
+
+    #loginBox h1 {
+        font-size: 24px;
+    }
+
+    .links {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
