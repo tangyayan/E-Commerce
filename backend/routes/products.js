@@ -11,5 +11,7 @@ router.get('/:id', productController.getProductById);        // 获取商品详�
 router.post('/', authMiddleware, productController.createProduct);        // 创建商品
 // router.put('/:id', authMiddleware, productController.updateProduct);      // 更新商品
 // router.delete('/:id', authMiddleware, productController.deleteProduct);   // 删除商品
+// router.get('/recommended', authMiddleware, productController.getRecommendedProducts); //推荐接口
+
 
 module.exports = router;

@@ -207,3 +207,21 @@ h2
     font-size: 12px;
     color: #666;
 }
+
+/* 店铺链接样式 */
+.shop-link {
+    text-decoration: none;
+    color: rgb(29, 29, 29);
+    transition: all 0.3s ease; /* 添加过渡效果 */
+}
+
+/* 访问过的链接保持相同样式 */
+.shop-link:visited {
+    color: rgb(29, 29, 29);
+    text-decoration: none;
+}
+
+/* 悬停时显示下划线（对所有状态生效）*/
+.shop-link:hover {
+    text-decoration: underline !important; /* 使用 !important 确保优先级 */
+}

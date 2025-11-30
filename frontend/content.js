@@ -29,7 +29,18 @@ function dynamicClothingSection(product) {
 
     // 店铺名称
     let h4 = document.createElement("h4");
-    h4.appendChild(document.createTextNode(product.shop_name || '未知店铺'));
+    // h4.appendChild(document.createTextNode(product.shop_name || '未知店铺'));
+    if(product.shop_name) {
+        let a = document.createElement("a");
+        a.href = `shop.html?id=${product.shop_id}`;
+        a.textContent = product.shop_name;
+        // a.style.color = "inherit";             // 继承父级颜色
+        a.classList.add("shop-link");         // 添加类名以便样式化
+        h4.appendChild(a);
+    }
+    else {
+        h4.appendChild(document.createTextNode('未知店铺'));
+    }
 
     // 价格容器
     let priceDiv = document.createElement("div");
@@ -113,11 +124,9 @@ async function loadProducts() {
 // ==================== 渲染商品列表 ====================
 function renderProducts(products) {
     const containerClothing = document.getElementById("containerClothing");
-    const containerAccessories = document.getElementById("containerAccessories");
     
     // 清空容器
     if (containerClothing) containerClothing.innerHTML = '';
-    if (containerAccessories) containerAccessories.innerHTML = '';
 
     if (!products || products.length === 0) {
         if (containerClothing) {
@@ -131,10 +140,7 @@ function renderProducts(products) {
         const productElement = dynamicClothingSection(product);
         
         // 根据商品类型添加到不同容器
-        // 注意：您的数据库可能没有 isAccessory 字段，需要添加或使用其他分类方式
-        if (product.isAccessory && containerAccessories) {
-            containerAccessories.appendChild(productElement);
-        } else if (containerClothing) {
+        if (containerClothing) {
             containerClothing.appendChild(productElement);
         }
     });

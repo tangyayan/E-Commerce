@@ -17,12 +17,7 @@ exports.getAllProducts = async (req, res) => {
                 sh.shop_name,
                 MIN(k.now_price) as now_price,
                 MIN(k.origin_price) as origin_price,
-                SUM(ws.stock) as total_stock,
-                json_agg(json_build_object(
-                    'sku_id', k.sku_id,
-                    'now_price', k.now_price,
-                    'origin_price', k.origin_price
-                )) as skus
+                SUM(ws.stock) as total_stock
             FROM SPU s
             LEFT JOIN SKU k ON s.spu_id = k.spu_id
             LEFT JOIN Shop sh ON s.shop_id = sh.shop_id
@@ -92,9 +87,16 @@ exports.getProductById = async (req, res) => {
         const skuResult = await pool.query(`
             SELECT 
                 k.*,
-                COALESCE(SUM(ws.stock), 0) as stock
+                COALESCE(SUM(ws.stock), 0) as stock,
+                json_agg(json_build_object(
+                        'attr_id', v.attr_id,
+                        'value_id', v.value_id,
+                        'value', v.value
+                    )) as attributes
             FROM SKU k
             LEFT JOIN WarehouseStock ws ON k.sku_id = ws.sku_id
+            LEFT JOIN skuattributevalue skuv ON skuv.sku_id = k.sku_id
+            LEFT JOIN attributevalue v on v.value_id=skuv.value_id
             WHERE k.spu_id = $1
             GROUP BY k.sku_id
         `, [id]);

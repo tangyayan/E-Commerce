@@ -1,188 +1,562 @@
-body
-{
+body {
     margin: 0;
     text-transform: capitalize;
     font-family: 'Lato', sans-serif;
     font-weight: 100;
 }
 
-#containerProduct
-{
+#containerProduct {
     padding-top: 80px;
 }
-#containerD
-{
+
+/* ========== 主容器使用 Grid 布局 ========== */
+#containerD {
     width: 90%;
     margin: auto;
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr 2fr; /* 图片占 1 份，详情占 2 份 */
+    grid-template-rows: auto 1fr; /* 第一行自动高度（店铺名称），第二行填充剩余空间 */
+    gap: 30px;
     padding: 80px 40px;
+    align-items: start; /* 顶部对齐 */
 }
-#imageSection
-{
-    width: 80%;
-    margin: auto;
+
+/* 店铺名称横跨两列 */
+#containerD > h4 {
+    grid-column: 1 / -1; /* 从第 1 列到最后一列 */
+    grid-row: 1; /* 第一行 */
+    font-size: 25px;
+    font-weight: bold;
+    color: rgb(3, 122, 122);
+    letter-spacing: 1px;
+    word-spacing: 2px;
+    margin: 0 0 10px 0;
 }
-#imageSection img
-{
+
+/* 内容包装器占据第二行 */
+.content-wrapper {
+    grid-column: 1 / -1; /* 横跨所有列 */
+    grid-row: 2; /* 第二行 */
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* 与父容器相同的列比例 */
+    gap: 30px;
+    align-items: start; /* 顶部对齐 */
+}
+
+/* ========== 图片区域 ========== */
+#imageSection {
     width: 100%;
-    float: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    position: sticky; /* 粘性定位 */
+    top: 100px;
+    align-self: flex-start;
+    max-height: calc(100vh - 120px);
+}
+
+#imageSection img {
+    width: 100%;
     border-radius: 10px;
     box-shadow: 1px 2px 6px 2px rgb(219, 219, 219);
+    display: block; /* 去除图片底部间隙 */
+    max-height: 600px; /* 限制图片高度 */
+    object-fit: contain;
 }
-#imageSection img:hover
-{
+
+#imageSection img:hover {
     box-shadow: 1px 0px 9px 1px rgb(3, 122, 122);
-
 }
 
-#productDetails
-{
+/* ========== 商品详情区域 ========== */
+#productDetails {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* 改为从上开始 */
+    min-height: 0; /* 移除最小高度限制 */
 }
-h1
-{
+
+h1 {
     font-size: 35px;
     letter-spacing: 1px;
     word-spacing: 2px;
+    margin-top: 0;
 }
-h4
-{
+
+/*h4 {
     font-size: 15px;
     font-weight: bold;
     color: rgb(3, 122, 122);
     letter-spacing: 1px;
     word-spacing: 2px;
+}*/
+
+/* 详情内容区域 */
+#details {
+    flex: 0 1 auto; /* 不增长，可收缩 */
+    margin-bottom: 20px;
+    max-height: calc(100vh - 400px); /* 根据视口高度动态调整 */
+    overflow-y: auto;
+    padding-right: 10px;
 }
-#productPreview
-{
+
+/* 美化滚动条 */
+#details::-webkit-scrollbar {
+    width: 8px;
+}
+
+#details::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#details::-webkit-scrollbar-thumb {
+    background: rgb(3, 122, 122);
+    border-radius: 4px;
+}
+
+#details::-webkit-scrollbar-thumb:hover {
+    background: rgb(3, 94, 94);
+}
+
+/* ========== 价格区域 ========== */
+.price-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 16px;
+}
+
+.current-price {
+    color: #e74c3c;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+}
+
+/* ========== 库存区域 ========== */
+.stock-section {
+    margin: 15px 0;
+    font-size: 14px;
+}
+
+.stock-label {
+    color: #666;
+    font-weight: normal;
+}
+
+.stock-value {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.out-of-stock {
+    color: #e74c3c;
+}
+
+/* ========== SKU 选择区域 ========== */
+.sku-section {
+    margin: 20px 0;
+}
+
+.sku-section h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.sku-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.sku-button {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.sku-button:hover:not(.disabled) {
+    border-color: rgb(3, 122, 122);
+}
+
+.sku-button.active {
+    border-color: rgb(3, 122, 122);
+    background-color: rgba(3, 122, 122, 0.1);
+}
+
+.sku-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f5f5f5;
+}
+
+/* ========== 属性选择区域 ========== */
+.attributes-section {
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.attribute-group {
+    margin-bottom: 20px;
+}
+
+.attribute-group:last-child {
+    margin-bottom: 0;
+}
+
+.attribute-label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.attribute-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.attribute-value-button {
+    min-width: 80px;
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+    font-size: 14px;
+    text-align: center;
+}
+
+.attribute-value-button:hover:not(.disabled) {
+    border-color: rgb(3, 122, 122);
+    background-color: rgba(3, 122, 122, 0.05);
+}
+
+.attribute-value-button.active {
+    border-color: rgb(3, 122, 122);
+    background-color: rgba(3, 122, 122, 0.1);
+    color: rgb(3, 122, 122);
+    font-weight: bold;
+}
+
+.attribute-value-button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f5f5f5;
+    color: #999;
+    text-decoration: line-through;
+}
+
+/* 属性值按钮 - 禁用状态 */
+.attribute-value-button.disabled,
+.attribute-value-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed !important;
+    background-color: #f5f5f5;
+    color: #999;
+    border-color: #ddd;
+    position: relative;
+}
+
+/* 禁用按钮添加删除线效果 */
+.attribute-value-button.disabled::after,
+.attribute-value-button:disabled::after {
+    content: '';
+    position: absolute;
+    left: 5%;
+    top: 50%;
+    width: 90%;
+    height: 1px;
+    background-color: #999;
+    transform: translateY(-50%);
+}
+
+/* 禁用按钮不响应 hover */
+.attribute-value-button.disabled:hover,
+.attribute-value-button:disabled:hover {
+    border-color: #ddd !important;
+    background-color: #f5f5f5 !important;
+    transform: none !important;
+}
+
+/* 防止点击禁用按钮 */
+.attribute-value-button.disabled {
+    pointer-events: none;
+}
+
+/* ========== 商品预览图 ========== */
+#productPreview {
     padding-bottom: 10px;
 }
-#productPreview > img
-{
+
+#productPreview h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+#productPreview > img {
     width: 50px;
-    padding: 10px 10px;
+    padding: 10px;
     border-radius: 15px;
     cursor: pointer;
 }
-p
-{
+
+.preview-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.previewImg {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.previewImg:hover {
+    border-color: rgb(3, 122, 122);
+    transform: scale(1.1);
+}
+
+/* ========== 文本样式 ========== */
+p {
     font-size: 15px;
     word-spacing: 2px;
     letter-spacing: 1px;
     line-height: 25px;
+    color: #555;
 }
-button
-{
-    padding: 10px 15px;
+
+h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* ========== 按钮区域（关键部分）========== */
+#button {
+    margin-top: 20px; /* 固定间距 */
+    padding-top: 20px;
+    width: 100%;
+    flex-shrink: 0; /* 不收缩 */
+    border-top: 1px solid #eee; /* 添加分隔线 */
+}
+
+button {
+    padding: 15px 30px;
     color: white;
     background-color: rgb(3, 122, 122);
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 20px;
-}
-button a
-{
-    text-decoration: none;
     font-size: 18px;
+    width: 100%; /* 按钮占满宽度 */
+    transition: background-color 0.3s;
 }
-button:hover
-{
+
+button:hover:not(:disabled) {
     background-color: rgb(3, 94, 94);
 }
-button a:focus
-{
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+button a {
+    text-decoration: none;
+    font-size: 18px;
+    color: white;
+}
+
+button a:focus {
     outline: none;
+}
+
+/* ========== 店铺链接样式 ========== */
+.shop-link {
+    text-decoration: none;
+    color: rgb(3, 122, 122);
+    transition: all 0.3s ease;
+}
+
+.shop-link:visited {
+    color: rgb(3, 122, 122);
+    text-decoration: none;
+}
+
+.shop-link:hover,
+.shop-link:visited:hover {
+    text-decoration: underline !important;
+}
+
+/* ========== 加载和错误状态 ========== */
+.loading {
+    text-align: center;
+    padding: 50px;
+    font-size: 18px;
+    color: #666;
+}
+
+.error-message {
+    text-align: center;
+    padding: 50px;
+    color: #e74c3c;
+}
+
+.error-message button {
+    margin: 10px;
+    width: auto;
 }
 
 /* ----------------------------- MEDIA QUERY --------------------------- */
 
-@media(max-width: 1300px)
-{
-    h1
-    {
+@media(max-width: 1300px) {
+    h1 {
         font-size: 28px;
     }
-    #productPreview > img
-    {
+    
+    #productPreview > img,
+    .previewImg {
         width: 40px;
-        padding: 10px 10px;
-        padding-bottom: 30px;
+        height: 40px;
     }
-    button
-    {
-        padding: 8px 13px;
-        background-color: rgb(3, 122, 122);
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
+    
+    button {
+        padding: 12px 25px;
+        font-size: 16px;
     }
 }
 
-@media(max-width: 1170px)
-{
-    h1
-    {
+@media(max-width: 1170px) {
+    h1 {
         font-size: 22px;
     }
-    #productPreview > img
-    {
-        width: 40px;
-        padding: 10px 10px;
-        padding-bottom: 30px;
-    }
-    button a
-    {
+    
+    button a {
         font-size: 15px;
-
     }
-    h4, p
-    {
+    
+    h4, p {
         font-size: 13px;
     }
-    h3
-    {
+    
+    h3 {
         font-size: 15px;
     }
-
 }
 
-@media(max-width: 900px)
-{
-    /* #containerProduct */
-    #containerD
-    {
-        width: 60%;
-        margin: auto;
-        display: grid;
-        grid-template-columns: 1fr;
-    }
-    #imageSection
-    {
-        width: 100%;
-        text-align: center;
-    }
-    #imageSection img
-    {
-        text-align: center;
-        width: 70%;
-        float: none;
-    }
-    #productDetails
-    {
-        width: 100%;
-    }
-    #button
-    {
-        text-align: center;
-    }
-}
-
-@media(max-width: 650px)
-{
-    #containerD
-    {
+@media(max-width: 900px) {
+    #containerD {
         width: 80%;
+        grid-template-columns: 1fr; /* 单列布局 */
+        grid-template-rows: auto auto auto; /* 三行：店铺、图片、详情 */
+        padding: 40px 20px;
+    }
+    
+    #containerD > h4 {
+        grid-column: 1;
+        grid-row: 1;
+        margin-bottom: 20px;
+    }
+    
+    .content-wrapper {
+        grid-column: 1;
+        grid-row: 2 / 4; /* 占据第 2、3 行 */
+        grid-template-columns: 1fr; /* 单列布局 */
+        grid-template-rows: auto auto; /* 两行：图片、详情 */
+    }
+    
+    #imageSection {
+        width: 100%;
+        text-align: center;
+        grid-column: 1;
+        grid-row: 1;
+        position: static; /* 移动端取消粘性定位 */
+        max-height: none; /* 移除高度限制 */
+    }
+    
+    #imageSection img {
+        width: 70%;
+        margin: 0 auto;
+        max-height: none; /* 移除高度限制 */
+    }
+    
+    #productDetails {
+        width: 100%;
+        grid-column: 1;
+        grid-row: 2;
+    }
+    
+    #details {
+        max-height: none; /* 移动端不限制高度 */
+        overflow-y: visible; /* 移除滚动条 */
+    }
+    
+    #button {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    button {
+        width: auto;
+        min-width: 200px;
+    }
+}
+
+@media(max-width: 650px) {
+    #containerD {
+        width: 90%;
+        padding: 30px 15px;
+    }
+    
+    #imageSection img {
+        width: 100%;
+    }
+    
+    button {
+        width: 100%;
+        padding: 12px 20px;
+    }
+    
+    .sku-button {
+        width: 100%;
+    }
+}
+
+@media(max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+    
+    .current-price {
+        font-size: 24px;
+    }
+    
+    button {
+        font-size: 16px;
     }
 }
