@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS CartItem (
     sku_id INT REFERENCES SKU(sku_id) ON DELETE CASCADE,
     quantity INT NOT NULL CHECK (quantity > 0)
 );
+CREATE UNIQUE INDEX idx_cart_sku_unique ON CartItem(cart_id, sku_id); --确保同一购物车内同一SKU只能有一条记录
 
 --客户信息
 CREATE TABLE IF NOT EXISTS shipping_address(

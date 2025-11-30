@@ -432,6 +432,66 @@ button a:focus {
     width: auto;
 }
 
+/* 通知样式 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+    max-width: 300px;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-success {
+    background-color: #52c41a;
+    color: white;
+}
+
+.notification-error {
+    background-color: #ff4d4f;
+    color: white;
+}
+
+.notification-info {
+    background-color: #1890ff;
+    color: white;
+}
+
+/* 加入购物车按钮加载状态 */
+.add-to-cart-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 购物车徽章 */
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #ff4d4f;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
 /* ----------------------------- MEDIA QUERY --------------------------- */
 
 @media(max-width: 1300px) {

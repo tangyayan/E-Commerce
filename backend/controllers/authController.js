@@ -26,6 +26,11 @@ exports.register = async (req, res) => {
             'INSERT INTO Account (username, password, email, have_shop) VALUES ($1, $2, $3, $4) RETURNING account_id, username, email, have_shop',
             [username, hashedPassword, email, have_shop]
         );
+        // 增加购物车
+        await pool.query(
+            'INSERT INTO Cart (account_id) VALUES ($1)',
+            [result.rows[0].account_id]
+        );
 
         const user = result.rows[0];
 

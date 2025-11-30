@@ -1,5 +1,49 @@
 console.log("header.js 加载成功");
 
+// 初始化购物车徽章
+async function initCartBadge() {
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    const badge = document.getElementById('badge');
+    const session_badge = sessionStorage.getItem('badge');
+    
+    if (!badge) return;
+    
+    // 如果未登录，隐藏徽章
+    if (!token) {
+        badge.style.display = 'none';
+        return;
+    }
+
+    if(session_badge!=0 && session_badge!=null){
+        badge.textContent = session_badge;
+        badge.style.display = session_badge > 0 ? 'block' : 'none';
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/cart', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const result = await response.json();
+        console.log("获取购物车数量结果:", result);
+        
+        if (result.success) {
+            const badge = document.getElementById('badge');
+            if (badge) {
+                sessionStorage.setItem('badge', result.total);
+                badge.textContent = result.total;
+                badge.style.display = result.total > 0 ? 'block' : 'none';
+            }
+        }
+    } catch (error) {
+        console.error('获取购物车数量失败:', error);
+        badge.style.display = 'none';
+    }
+}
+
 function checkUserLoginStatus() {
     const userToken = localStorage.getItem('userToken');
     const userInfo = localStorage.getItem('userInfo');
@@ -16,11 +60,16 @@ function checkUserLoginStatus() {
                 signOutIcon.style.display = 'inline-block'; // 显示 Sign Out 图标
                 signOutIcon.addEventListener('click', logout);
             }
+            initCartBadge();
         } else {
             // 用户未登录
             userLink.href = 'login.html';
             if (signOutIcon) {
                 signOutIcon.style.display = 'none'; // 隐藏 Sign Out 图标
+            }
+            const badge = document.getElementById('badge');//未登录隐藏购物车徽章
+            if (badge) {
+                badge.style.display = 'none';
             }
         }
     }

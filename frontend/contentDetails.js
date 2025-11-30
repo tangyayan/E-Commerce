@@ -15,6 +15,7 @@ if (!productId) {
 }
 
 // ==================== 创建商品详情 DOM ====================
+// TODO: 发货地址显示 
 function dynamicContentDetails(req) {
     const product = req.product;
     const mainContainer = document.getElementById('containerProduct');
@@ -530,12 +531,19 @@ async function addToCart(skuId, productName) {
         const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
         
         if (!token) {
-            alert('请先登录');
-            window.location.href = 'login.html';
+            if (confirm('您还未登录，是否前往登录页面?')) {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+            }
             return;
         }
 
         console.log('加入购物车:', { skuId, productName });
+
+        // 显示加载状态
+        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+        const originalText = addToCartBtn.textContent;
+        addToCartBtn.disabled = true;
+        addToCartBtn.textContent = '添加中...';
 
         const response = await fetch(`${API_BASE_URL}/cart`, {
             method: 'POST',
@@ -551,16 +559,93 @@ async function addToCart(skuId, productName) {
 
         const result = await response.json();
         
+        // 恢复按钮状态
+        addToCartBtn.disabled = false;
+        addToCartBtn.textContent = originalText;
+        
         if (result.success) {
             console.log('加入购物车成功:', result);
-            alert('商品已加入购物车');
+            
+            // 显示成功提示
+            showNotification('✅ ' + result.message, 'success');
+            
+            // 更新购物车数量徽章
+            updateCartBadge();
+            
+            // 询问是否前往购物车
+            if (confirm(`${productName} 已添加到购物车\n是否立即查看购物车?`)) {
+                window.location.href = 'cart.html';
+            }
         } else {
             console.error('加入购物车失败:', result.message);
-            alert(result.message || '加入购物车失败');
+            showNotification('❌ ' + result.message, 'error');
+            
+            // 如果是库存不足，可以提供更多信息
+            if (result.message.includes('库存不足')) {
+                alert(result.message);
+            }
         }
     } catch (error) {
         console.error('加入购物车时发生错误:', error);
-        alert('加入购物车时发生错误');
+        showNotification('❌ 加入购物车时发生错误', 'error');
+        
+        // 恢复按钮状态
+        const addToCartBtn = document.querySelector('.add-to-cart-btn');
+        if (addToCartBtn) {
+            addToCartBtn.disabled = false;
+            addToCartBtn.textContent = '加入购物车';
+        }
+    }
+}
+
+// 显示通知
+function showNotification(message, type = 'info') {
+    // 创建通知元素
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // 添加到页面
+    document.body.appendChild(notification);
+    
+    // 显示动画
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 10);
+    
+    // 3秒后自动消失
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+            notification.remove();
+        }, 300);
+    }, 3000);
+}
+
+// 更新购物车徽章数量
+async function updateCartBadge() {
+    try {
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+        if (!token) return;
+        
+        const response = await fetch(`${API_BASE_URL}/cart`, {
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const badge = document.getElementById('badge');
+            if (badge) {
+                sessionStorage.setItem('badge', result.total);
+                badge.textContent = result.total;
+                badge.style.display = result.total > 0 ? 'block' : 'none';
+            }
+        }
+    } catch (error) {
+        console.error('更新购物车徽章失败:', error);
     }
 }
 

@@ -12,6 +12,7 @@ module.exports = (req, res, next) => {
 
         // 验证 token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // console.log('认证通过的用户:', decoded);
         req.user = decoded;
         next();
     } catch (error) {

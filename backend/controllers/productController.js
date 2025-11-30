@@ -173,6 +173,11 @@ exports.getProductById = async (req, res) => {
 };
 
 /**
+ * 获取具体商品SKU 
+ */
+
+
+/**
  * 创建新商品（需要登录且有店铺）
  */
 exports.createProduct = async (req, res) => {
