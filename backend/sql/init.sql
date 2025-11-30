@@ -32,7 +32,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-CREATE TRIGGER trg_check_shop_constraints
+CREATE TRIGGER  trg_check_shop_constraints
 BEFORE INSERT ON Shop
 FOR EACH ROW
 EXECUTE PROCEDURE check_shop_constraints();
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS SPU(
     --category_id INT,
     image_url VARCHAR(255),
     description TEXT,
-    shop_id INT not null,
+    shop_id INT not null, --应当去掉
     FOREIGN KEY (shop_id) REFERENCES Shop(shop_id)
 );
 CREATE TABLE IF NOT EXISTS SKU (
@@ -74,6 +74,51 @@ CREATE TABLE IF NOT EXISTS SKUAttributeValue (
     FOREIGN KEY (sku_id) REFERENCES SKU(sku_id) ON DELETE CASCADE,
     FOREIGN KEY (value_id) REFERENCES AttributeValue(value_id) ON DELETE CASCADE
 );
+CREATE OR REPLACE FUNCTION check_sku_attributes_before()
+RETURNS TRIGGER AS $$
+DECLARE
+    new_attr_id INT;
+    sku_spu_id INT;
+BEGIN
+    -- 1. 获取 value_id 对应的 attr_id
+    SELECT attr_id INTO new_attr_id
+    FROM AttributeValue
+    WHERE value_id = NEW.value_id;
+    
+    -- 2. 获取 SKU 对应的 SPU ID
+    SELECT spu_id INTO sku_spu_id
+    FROM SKU
+    WHERE sku_id = NEW.sku_id;
+    
+    -- 3. 检查当前 SKU 是否已经有同一个 attr_id 的值
+    IF EXISTS (
+        SELECT 1
+        FROM SKUAttributeValue sav
+        JOIN AttributeValue av ON sav.value_id = av.value_id
+        WHERE sav.sku_id = NEW.sku_id
+        AND av.attr_id = new_attr_id
+    ) THEN
+        RAISE EXCEPTION 'SKU % already has a value for attribute %', NEW.sku_id, new_attr_id;
+    END IF;
+    
+    -- 4. 检查该 attr_id 是否属于 SKU 的 SPU
+    IF NOT EXISTS (
+        SELECT 1
+        FROM AttributeKey ak
+        WHERE ak.attr_id = new_attr_id
+        AND ak.spu_id = sku_spu_id
+    ) THEN
+        RAISE EXCEPTION 'Attribute % does not belong to SPU % of SKU %', 
+            new_attr_id, sku_spu_id, NEW.sku_id;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_check_sku_attributes_before
+BEFORE INSERT ON SKUAttributeValue
+FOR EACH ROW
+EXECUTE PROCEDURE check_sku_attributes_before();
 
 --仓库信息
 CREATE TABLE IF NOT EXISTS warehouse (--一般先有shop再有warehouse

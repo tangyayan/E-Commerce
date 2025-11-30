@@ -84,21 +84,60 @@ exports.getProductById = async (req, res) => {
         const spu = spuResult.rows[0];
         
         // 获取所有 SKU
+        // CTE: 使用 CTE 优化查询，避免重复计算库存和属性
         const skuResult = await pool.query(`
+            WITH stock_summary AS (
+                -- 先计算每个 SKU 的库存汇总（避免重复）
+                SELECT 
+                    ws.sku_id,
+                    COALESCE(SUM(ws.stock), 0) as total_stock,
+                    -- 库存最多的仓库地址
+                    (
+                        SELECT w2.address
+                        FROM WarehouseStock ws2
+                        JOIN Warehouse w2 ON w2.code = ws2.code
+                        WHERE ws2.sku_id = ws.sku_id
+                        ORDER BY ws2.stock DESC NULLS LAST
+                        LIMIT 1
+                    ) as max_stock_address,
+                    -- 最大库存数量
+                    MAX(ws.stock) as max_stock
+                FROM WarehouseStock ws
+                LEFT JOIN Warehouse w ON w.code = ws.code
+                GROUP BY ws.sku_id
+            ),
+            attribute_summary AS (
+                -- 再计算每个 SKU 的属性（避免重复）
+                SELECT 
+                    skuv.sku_id,
+                    json_agg(
+                        json_build_object(
+                            'attr_id', v.attr_id,
+                            'attr_name', ak.attr_name,
+                            'value_id', v.value_id,
+                            'value', v.value
+                        ) ORDER BY v.attr_id
+                    ) FILTER (WHERE v.value_id IS NOT NULL) as attributes
+                FROM skuattributevalue skuv
+                LEFT JOIN attributevalue v ON v.value_id = skuv.value_id
+                LEFT JOIN attributekey ak ON ak.attr_id = v.attr_id
+                GROUP BY skuv.sku_id
+            )
             SELECT 
-                k.*,
-                COALESCE(SUM(ws.stock), 0) as stock,
-                json_agg(json_build_object(
-                        'attr_id', v.attr_id,
-                        'value_id', v.value_id,
-                        'value', v.value
-                    )) as attributes
+                k.sku_id,
+                k.spu_id,
+                k.origin_price,
+                k.now_price,
+                k.barcode,
+                COALESCE(ss.total_stock, 0) as stock,
+                ss.max_stock_address,
+                ss.max_stock,
+                ats.attributes
             FROM SKU k
-            LEFT JOIN WarehouseStock ws ON k.sku_id = ws.sku_id
-            LEFT JOIN skuattributevalue skuv ON skuv.sku_id = k.sku_id
-            LEFT JOIN attributevalue v on v.value_id=skuv.value_id
+            LEFT JOIN stock_summary ss ON ss.sku_id = k.sku_id
+            LEFT JOIN attribute_summary ats ON ats.sku_id = k.sku_id
             WHERE k.spu_id = $1
-            GROUP BY k.sku_id
+            ORDER BY k.sku_id
         `, [id]);
         
         // 获取属性
@@ -121,7 +160,7 @@ exports.getProductById = async (req, res) => {
             product: {
                 ...spu,
                 skus: skuResult.rows,
-                attributes: attrResult.rows
+                attributes: attrResult.rows,
             }
         });
     } catch (error) {
