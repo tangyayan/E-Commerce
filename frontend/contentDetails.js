@@ -320,13 +320,7 @@ function dynamicContentDetails(req) {
                 let isAvailable = false;
                 let testAttrCount = Object.keys(testAttributes).length;
 
-                if (testAttrCount === 0) {
-                    button.disabled = false;
-                    button.classList.remove('disabled');
-                    console.log(`  无选择，启用按钮: ${button.textContent}`);
-                    return;
-                }
-                else if (testAttrCount === totalAttrCount ){
+                if (testAttrCount === totalAttrCount ){
                     // 将属性组合转换为排序后的字符串
                     const testTuple = Object.keys(testAttributes)
                         .sort((a, b) => a - b)  // 按 attr_id 排序
