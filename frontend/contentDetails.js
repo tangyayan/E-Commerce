@@ -113,6 +113,7 @@ function dynamicContentDetails(req) {
     let selectedAttributes = {}; // 记录已选择的属性 {attr_id: value_id}
     let selectedSkuId = null;
     const attributeButtons = {}; // 存储所有属性按钮的引用 {attr_id: [buttons]}
+    let selectedprice = null;
 
     // 构建可用的 SKU 属性组合集合
     const availableSkuCombinations = new Set();
@@ -135,6 +136,7 @@ function dynamicContentDetails(req) {
                 selectedAttributes[attr.attr_id] = attr.value_id;
             });
             selectedSkuId = firstSku.sku_id;
+            selectedprice = firstSku.now_price;
             console.log('默认选择第一个 SKU:', firstSku);
             console.log('默认选中的属性:', selectedAttributes);
         }
@@ -198,6 +200,7 @@ function dynamicContentDetails(req) {
                         });
                         delete selectedAttributes[this.dataset.attrId];
                         selectedSkuId = null;
+                        selectedprice = null;
                         resetPriceAndStock();
                         updateAttributeButtons();
                     }
@@ -400,6 +403,7 @@ function dynamicContentDetails(req) {
 
         if (matchedSku) {
             selectedSkuId = matchedSku.sku_id;
+            selectedprice = matchedSku.now_price;
             console.log('✅ 找到匹配的 SKU:', matchedSku);
 
             // 更新价格
@@ -450,6 +454,7 @@ function dynamicContentDetails(req) {
         } else {
             console.warn('❌ 没有找到匹配的 SKU');
             selectedSkuId = null;
+            selectedprice = null;
 
             // 显示"暂无库存"状态
             const stockElement = document.getElementById('stockDiv');
@@ -508,7 +513,7 @@ function dynamicContentDetails(req) {
             alert('请选择完整的商品规格');
             return;
         }
-        await addToCart(selectedSkuId, product.name);
+        await addToCart(selectedSkuId, product.name, selectedprice);
     };
 
     buttonDiv.appendChild(addToCartButton);
@@ -525,7 +530,7 @@ function dynamicContentDetails(req) {
 }
 
 // ==================== 加入购物车功能 ====================
-async function addToCart(skuId, productName) {
+async function addToCart(skuId, productName, now_price) {
     try {
         // 检查用户是否登录
         const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
@@ -553,7 +558,8 @@ async function addToCart(skuId, productName) {
             },
             body: JSON.stringify({ 
                 sku_id: skuId,
-                quantity: 1 
+                quantity: 1,
+                price: now_price
             }),
         });
 

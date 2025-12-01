@@ -144,7 +144,8 @@ CREATE TABLE IF NOT EXISTS CartItem (
     cart_item_id SERIAL PRIMARY KEY,
     cart_id INT REFERENCES Cart(cart_id) ON DELETE CASCADE,
     sku_id INT REFERENCES SKU(sku_id) ON DELETE CASCADE,
-    quantity INT NOT NULL CHECK (quantity > 0)
+    quantity INT NOT NULL CHECK (quantity > 0),
+    price_snapshot DECIMAL(10,2) CHECK (price_snapshot >= 0 or price_snapshot IS NULL)
 );
 CREATE UNIQUE INDEX idx_cart_sku_unique ON CartItem(cart_id, sku_id); --确保同一购物车内同一SKU只能有一条记录
 

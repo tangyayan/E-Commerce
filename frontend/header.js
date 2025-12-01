@@ -13,15 +13,9 @@ async function initCartBadge() {
         badge.style.display = 'none';
         return;
     }
-
-    if(session_badge!=0 && session_badge!=null){
-        badge.textContent = session_badge;
-        badge.style.display = session_badge > 0 ? 'block' : 'none';
-        return;
-    }
-
     try {
-        const response = await fetch('http://localhost:3000/api/cart', {
+        //这里不能用相对路径，因为header.js可能被不同路径的页面引用
+        const response = await fetch('http://localhost:3000/api/cart/count', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

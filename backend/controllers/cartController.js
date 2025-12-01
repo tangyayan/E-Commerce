@@ -1,9 +1,9 @@
 const pool = require('../config/database');
 
 /**
- * 获取用户购物车
+ * 获取用户购物车数量
  */
-exports.getCart = async (req, res) => {
+exports.getCartCount = async (req, res) => {
     try {
         const userId = req.user.id;
         
@@ -29,12 +29,101 @@ exports.getCart = async (req, res) => {
 };
 
 /**
+ * 获取用户购物车详细信息
+ */
+exports.getCart = async (req, res) => {
+    //图片，店铺，库存，单价，数量，总数，属性
+    try {
+        const userId = req.user.id;
+        
+        const result = await pool.query(`
+            WITH cart_items AS (
+                -- 获取用户的购物车项
+                SELECT 
+                    ci.cart_item_id,
+                    ci.cart_id,
+                    ci.sku_id,
+                    ci.quantity,
+                    ci.price_snapshot
+                FROM Cart c
+                INNER JOIN CartItem ci ON ci.cart_id = c.cart_id
+                WHERE c.account_id = $1
+            ),
+            stock_summary AS (
+                -- 计算每个 SKU 的库存汇总
+                SELECT 
+                    ws.sku_id,
+                    w.shop_id,
+                    COALESCE(SUM(ws.stock), 0) as total_stock
+                FROM WarehouseStock ws
+                LEFT JOIN Warehouse w ON w.code = ws.code
+                WHERE ws.sku_id IN (SELECT sku_id FROM cart_items)
+                GROUP BY ws.sku_id, w.shop_id
+            ),
+            attribute_summary AS (
+                -- 计算每个 SKU 的属性
+                SELECT 
+                    skuv.sku_id,
+                    json_agg(
+                        json_build_object(
+                            'attr_name', ak.attr_name,
+                            'value', v.value
+                        ) ORDER BY ak.attr_id
+                    ) FILTER (WHERE v.value_id IS NOT NULL) as attributes
+                FROM SKUAttributeValue skuv
+                LEFT JOIN AttributeValue v ON v.value_id = skuv.value_id
+                LEFT JOIN AttributeKey ak ON ak.attr_id = v.attr_id
+                WHERE skuv.sku_id IN (SELECT sku_id FROM cart_items)
+                GROUP BY skuv.sku_id
+            )
+            SELECT 
+                ci.cart_item_id,
+                ci.cart_id,
+                ci.sku_id,
+                ci.quantity,
+                ci.price_snapshot,                        -- 加入购物车时的价格
+                k.now_price,                              -- 当前价格
+                k.origin_price,                           -- 原价
+                k.barcode,
+                spu.spu_id,
+                spu.name as product_name,
+                spu.image_url,
+                spu.description,
+                shop.shop_id,
+                shop.shop_name,
+                COALESCE(ss.total_stock, 0) as stock,    -- 库存
+                COALESCE(ats.attributes, '[]'::json) as attributes  -- 属性
+            FROM cart_items ci
+            INNER JOIN SKU k ON k.sku_id = ci.sku_id
+            INNER JOIN SPU spu ON spu.spu_id = k.spu_id
+            INNER JOIN Shop shop ON shop.shop_id = spu.shop_id
+            LEFT JOIN stock_summary ss ON ss.sku_id = k.sku_id
+            LEFT JOIN attribute_summary ats ON ats.sku_id = k.sku_id
+            ORDER BY shop.shop_id
+        `, [userId]);
+        
+        res.json({
+            success: true,
+            cart: result.rows,
+            total: result.rows.length
+        });
+    } catch (error) {
+        console.error('获取购物车详细信息错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器错误'
+        });
+    }
+};
+
+/**
  * 添加商品到购物车
  */
 exports.addToCart = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { sku_id, quantity = 1 } = req.body;
+        const { sku_id, quantity = 1 , price} = req.body;
+        console.log("price in cartController:", sku_id, price);
 
         // 验证参数
         if (!sku_id) {
@@ -121,8 +210,8 @@ exports.addToCart = async (req, res) => {
         } else {
             // 新增购物车项
             await pool.query(
-                'INSERT INTO cartitem (cart_id, sku_id, quantity) VALUES ($1, $2, $3)',
-                [cart_id, sku_id, quantity]
+                'INSERT INTO cartitem (cart_id, sku_id, quantity, price_snapshot) VALUES ($1, $2, $3, $4)',
+                [cart_id, sku_id, quantity, price]
             );
             
             res.status(201).json({
@@ -143,13 +232,13 @@ exports.addToCart = async (req, res) => {
 
 /**
  * 更新购物车商品数量
-
+*/
 exports.updateCartQuantity = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { cart_id, quantity } = req.body;
+        const { cart_item_id, quantity } = req.body;
         
-        if (!cart_id || quantity < 1) {
+        if (!cart_item_id || quantity < 1) {
             return res.status(400).json({
                 success: false,
                 message: '参数错误'
@@ -158,8 +247,10 @@ exports.updateCartQuantity = async (req, res) => {
         
         // 检查购物车项是否属于该用户
         const cartCheck = await pool.query(
-            'SELECT c.sku_id FROM Cart c WHERE c.cart_id = $1 AND c.user_id = $2',
-            [cart_id, userId]
+            `SELECT ci.sku_id
+            FROM cartitem ci JOIN cart c ON c.cart_id = ci.cart_id
+            WHERE ci.cart_item_id = $1 AND c.account_id = $2`,
+            [cart_item_id, userId]
         );
         
         if (cartCheck.rows.length === 0) {
@@ -168,7 +259,6 @@ exports.updateCartQuantity = async (req, res) => {
                 message: '购物车项不存在'
             });
         }
-        
         const skuId = cartCheck.rows[0].sku_id;
         
         // 检查库存
@@ -189,8 +279,8 @@ exports.updateCartQuantity = async (req, res) => {
         
         // 更新数量
         await pool.query(
-            'UPDATE Cart SET quantity = $1 WHERE cart_id = $2',
-            [quantity, cart_id]
+            'UPDATE cartitem SET quantity = $1 WHERE cart_item_id = $2',
+            [quantity, cart_item_id]
         );
         
         res.json({
@@ -206,7 +296,7 @@ exports.updateCartQuantity = async (req, res) => {
         });
     }
 };
- */
+
 
 /**
  * 从购物车删除商品
@@ -214,12 +304,14 @@ exports.updateCartQuantity = async (req, res) => {
 exports.removeFromCart = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { cart_id } = req.params;
+        const { cart_item_id } = req.params;
         
         // 检查购物车项是否属于该用户
         const cartCheck = await pool.query(
-            'SELECT cart_id FROM Cart WHERE cart_id = $1 AND user_id = $2',
-            [cart_id, userId]
+            `SELECT ci.sku_id
+            FROM cartitem ci JOIN cart c ON c.cart_id = ci.cart_id
+            WHERE ci.cart_item_id = $1 AND c.account_id = $2`,
+            [cart_item_id, userId]
         );
         
         if (cartCheck.rows.length === 0) {
@@ -231,8 +323,8 @@ exports.removeFromCart = async (req, res) => {
         
         // 删除购物车项
         await pool.query(
-            'DELETE FROM Cart WHERE cart_id = $1',
-            [cart_id]
+            'DELETE FROM cartitem WHERE cart_item_id = $1',
+            [cart_item_id]
         );
         
         res.json({
@@ -241,28 +333,6 @@ exports.removeFromCart = async (req, res) => {
         });
     } catch (error) {
         console.error('删除购物车项错误:', error);
-        res.status(500).json({
-            success: false,
-            message: '服务器错误'
-        });
-    }
-};
-
-/**
- * 清空购物车
- */
-exports.clearCart = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        
-        await pool.query('DELETE FROM Cart WHERE user_id = $1', [userId]);
-        
-        res.json({
-            success: true,
-            message: '购物车已清空'
-        });
-    } catch (error) {
-        console.error('清空购物车错误:', error);
         res.status(500).json({
             success: false,
             message: '服务器错误'

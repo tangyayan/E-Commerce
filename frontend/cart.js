@@ -131,6 +131,11 @@ function createCartItem(item, itemTotal) {
     // 商品图片
     const imgDiv = document.createElement('div');
     imgDiv.className = 'item-image';
+    imgDiv.style.cursor = 'pointer'; // 添加鼠标指针样式
+    imgDiv.onclick = () => {
+        window.location.href = `contentDetails.html?id=${item.spu_id}`;
+    };
+    
     const img = document.createElement('img');
     img.src = item.image_url || 'img/default-product.jpg';
     img.alt = item.product_name;
@@ -148,6 +153,10 @@ function createCartItem(item, itemTotal) {
     const nameH3 = document.createElement('h3');
     nameH3.className = 'item-name';
     nameH3.textContent = item.product_name;
+    nameH3.style.cursor = 'pointer';
+    nameH3.onclick = () => {
+        window.location.href = `contentDetails.html?id=${item.spu_id}`;
+    };
     detailsDiv.appendChild(nameH3);
     
     // 商品属性
@@ -166,13 +175,40 @@ function createCartItem(item, itemTotal) {
     // 店铺名称
     const shopP = document.createElement('p');
     shopP.className = 'item-shop';
-    shopP.textContent = `店铺: ${item.shop_name || '未知'}`;
+    
+    if (item.shop_id) {
+        const shopLink = document.createElement('a');
+        shopLink.href = `shop.html?id=${item.shop_id}`;
+        shopLink.textContent = `店铺: ${item.shop_name || '未知'}`;
+        shopLink.style.color = '#666';
+        shopLink.style.textDecoration = 'none';
+        shopLink.onmouseover = function() {
+            this.style.color = 'rgb(3, 122, 122)';
+            this.style.textDecoration = 'underline';
+        };
+        shopLink.onmouseout = function() {
+            this.style.color = '#666';
+            this.style.textDecoration = 'none';
+        };
+        shopP.appendChild(shopLink);
+    } else {
+        shopP.textContent = `店铺: ${item.shop_name || '未知'}`;
+    }
+    
     detailsDiv.appendChild(shopP);
     
     // 库存信息
     const stockP = document.createElement('p');
-    stockP.className = `item-stock ${item.available_stock === 0 ? 'out-of-stock' : ''}`;
-    stockP.textContent = `库存: ${item.available_stock === 0 ? '已售罄' : item.available_stock}`;
+    stockP.className = `item-stock ${item.stock === 0 ? 'out-of-stock' : ''}`;
+    if(item.stock === 0){
+        stockP.textContent = `库存: 已售罄`;
+    } else if(item.stock <= 10){
+        stockP.textContent = `库存紧张`;
+    }
+    //否则隐藏库存信息
+    else {
+        stockP.style.display = 'none';
+    }
     detailsDiv.appendChild(stockP);
     
     boxDiv.appendChild(detailsDiv);
@@ -199,7 +235,7 @@ function createCartItem(item, itemTotal) {
     minusBtn.className = 'qty-btn minus';
     minusBtn.innerHTML = '<i class="fas fa-minus"></i>';
     minusBtn.disabled = item.quantity <= 1;
-    minusBtn.onclick = () => updateQuantity(item.cart_id, item.quantity - 1);
+    minusBtn.onclick = () => updateQuantity(item.cart_item_id, item.quantity - 1);
     quantityDiv.appendChild(minusBtn);
     
     // 数量输入框
@@ -208,14 +244,14 @@ function createCartItem(item, itemTotal) {
     qtyInput.className = 'qty-input';
     qtyInput.value = item.quantity;
     qtyInput.min = 1;
-    qtyInput.max = item.available_stock;
+    qtyInput.max = item.stock;
     qtyInput.onchange = function() {
         const newQty = parseInt(this.value);
-        if (newQty >= 1 && newQty <= item.available_stock) {
-            updateQuantity(item.cart_id, newQty);
+        if (newQty >= 1 && newQty <= item.stock) {
+            updateQuantity(item.cart_item_id, newQty);
         } else {
             this.value = item.quantity;
-            alert(`数量必须在 1 到 ${item.available_stock} 之间`);
+            alert(`数量必须在 1 到 ${item.stock} 之间`);
         }
     };
     quantityDiv.appendChild(qtyInput);
@@ -224,8 +260,8 @@ function createCartItem(item, itemTotal) {
     const plusBtn = document.createElement('button');
     plusBtn.className = 'qty-btn plus';
     plusBtn.innerHTML = '<i class="fas fa-plus"></i>';
-    plusBtn.disabled = item.quantity >= item.available_stock;
-    plusBtn.onclick = () => updateQuantity(item.cart_id, item.quantity + 1);
+    plusBtn.disabled = item.quantity >= item.stock;
+    plusBtn.onclick = () => updateQuantity(item.cart_item_id, item.quantity + 1);
     quantityDiv.appendChild(plusBtn);
     
     boxDiv.appendChild(quantityDiv);
@@ -249,7 +285,7 @@ function createCartItem(item, itemTotal) {
     const removeBtn = document.createElement('button');
     removeBtn.className = 'remove-btn';
     removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i> 删除';
-    removeBtn.onclick = () => removeItem(item.cart_id, item.product_name);
+    removeBtn.onclick = () => removeItem(item.cart_item_id, item.product_name);
     actionsDiv.appendChild(removeBtn);
     boxDiv.appendChild(actionsDiv);
     
@@ -356,7 +392,7 @@ function showEmptyCart(message = '购物车是空的', showLoginLink = false) {
 /**
  * 更新商品数量
  */
-async function updateQuantity(cartId, newQuantity) {
+async function updateQuantity(cart_item_id, newQuantity) {
     newQuantity = parseInt(newQuantity);
     
     if (newQuantity < 1) {
@@ -377,7 +413,7 @@ async function updateQuantity(cartId, newQuantity) {
                 'Authorization': 'Bearer ' + token
             },
             body: JSON.stringify({
-                cart_id: cartId,
+                cart_item_id: cart_item_id,
                 quantity: newQuantity
             })
         });
@@ -385,7 +421,7 @@ async function updateQuantity(cartId, newQuantity) {
         const result = await response.json();
         
         if (result.success) {
-            console.log('数量更新成功');
+            console.log('数量更新成功', newQuantity);
             showNotification('✅ 数量更新成功', 'success');
             
             // 重新加载购物车
@@ -411,7 +447,7 @@ async function updateQuantity(cartId, newQuantity) {
 /**
  * 删除商品
  */
-async function removeItem(cartId, productName) {
+async function removeItem(cart_item_id, productName) {
     if (!confirm(`确定要删除"${productName}"吗？`)) {
         return;
     }
@@ -422,7 +458,7 @@ async function removeItem(cartId, productName) {
     try {
         const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
         
-        const response = await fetch(`${API_BASE_URL}/cart/${cartId}`, {
+        const response = await fetch(`${API_BASE_URL}/cart/${cart_item_id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -437,11 +473,6 @@ async function removeItem(cartId, productName) {
             
             // 重新加载购物车
             await loadCart();
-            
-            // 更新 header 徽章
-            if (typeof window.updateCartBadge === 'function') {
-                await window.updateCartBadge();
-            }
         } else {
             alert(result.message || '删除失败');
         }
