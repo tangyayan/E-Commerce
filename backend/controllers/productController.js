@@ -57,7 +57,7 @@ exports.getAllProducts = async (req, res) => {
 };
 
 /**
- * 获取单个商品详情
+ * 根据SPU获取所有SKU及其详情
  */
 exports.getProductById = async (req, res) => {
     try {
@@ -171,11 +171,6 @@ exports.getProductById = async (req, res) => {
         });
     }
 };
-
-/**
- * 获取具体商品SKU 
- */
-
 
 /**
  * 创建新商品（需要登录且有店铺）

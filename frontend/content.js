@@ -106,9 +106,6 @@ async function loadProducts() {
         if (data.success && data.products) {
             contentTitle = data.products;
             
-            // 更新购物车徽章
-            updateCartBadge();
-            
             // 渲染商品列表
             renderProducts(contentTitle);
         } else {
@@ -146,41 +143,6 @@ function renderProducts(products) {
     });
 
     console.log(`已渲染 ${products.length} 个商品`);
-}
-
-// ==================== 更新购物车徽章 ====================
-function updateCartBadge() {
-    const badgeElement = document.getElementById("badge");
-    
-    if (!badgeElement) return;
-
-    // 从 cookie 读取购物车数量
-    if (document.cookie.indexOf(",counter=") >= 0) {
-        const counter = document.cookie.split(",")[1].split("=")[1];
-        badgeElement.innerHTML = counter;
-        return;
-    }
-
-    // 或者从后端获取（如果用户已登录）
-    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-    
-    if (token) {
-        fetch(`${API_BASE_URL}/cart`, {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success && data.items) {
-                const totalItems = data.items.reduce((sum, item) => sum + item.quantity, 0);
-                badgeElement.innerHTML = totalItems;
-            }
-        })
-        .catch(err => console.error('获取购物车失败:', err));
-    } else {
-        badgeElement.innerHTML = '0';
-    }
 }
 
 // ==================== 显示错误信息 ====================

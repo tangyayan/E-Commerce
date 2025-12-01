@@ -569,9 +569,6 @@ async function addToCart(skuId, productName) {
             // 显示成功提示
             showNotification('✅ ' + result.message, 'success');
             
-            // 更新购物车数量徽章
-            updateCartBadge();
-            
             // 询问是否前往购物车
             if (confirm(`${productName} 已添加到购物车\n是否立即查看购物车?`)) {
                 window.location.href = 'cart.html';
@@ -620,33 +617,6 @@ function showNotification(message, type = 'info') {
             notification.remove();
         }, 300);
     }, 3000);
-}
-
-// 更新购物车徽章数量
-async function updateCartBadge() {
-    try {
-        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-        if (!token) return;
-        
-        const response = await fetch(`${API_BASE_URL}/cart`, {
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            const badge = document.getElementById('badge');
-            if (badge) {
-                sessionStorage.setItem('badge', result.total);
-                badge.textContent = result.total;
-                badge.style.display = result.total > 0 ? 'block' : 'none';
-            }
-        }
-    } catch (error) {
-        console.error('更新购物车徽章失败:', error);
-    }
 }
 
 // ==================== 后端调用 ====================
