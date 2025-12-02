@@ -49,7 +49,7 @@ function checkUserLoginStatus() {
         //userLink.href = ((userToken && userInfo) || (userTokenSession && userInfoSession)) ? 'user.html' : 'login.html';
         if ((userToken && userInfo) || (userTokenSession && userInfoSession)) {
             // 用户已登录
-            userLink.href = 'user.html';
+            userLink.href = "user.html?id=" + JSON.parse(userInfo || userInfoSession).id;
             if (signOutIcon) {
                 signOutIcon.style.display = 'inline-block'; // 显示 Sign Out 图标
                 signOutIcon.addEventListener('click', logout);

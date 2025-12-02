@@ -15,10 +15,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart'); 
+const userRoutes = require('./routes/user');
+const shopRoutes = require('./routes/shop');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes); 
+app.use('/api/user', userRoutes);
+app.use('/api/shop', shopRoutes);
 
 // 测试路由
 app.get('/api/health', (req, res) => {

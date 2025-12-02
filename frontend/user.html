@@ -1,0 +1,61 @@
+<!-- userLink.href = "user.html?id=i"-->
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>USER | E-COMMERCE WEBSITE</title>
+    
+    <!-- favicon -->
+    <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16"> 
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/user.css">
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/b921c4663e.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- HEADER -->
+    <div id="headerContainer"></div>
+    <script>
+        (function() {
+            var req = new XMLHttpRequest();
+            req.open("GET", "header.html", true);
+            req.onload = function() {
+                if (req.status === 200) {
+                    document.getElementById('headerContainer').innerHTML = req.responseText;
+                    
+                    var script = document.createElement('script');
+                    script.src = 'header.js';
+                    document.head.appendChild(script);
+                }
+            };
+            req.send();
+        })();
+    </script>
+
+    <!-- USER CONTENT -->
+    <div id="userContainer">
+        <div class="loading">加载中...</div>
+    </div>
+
+    <!-- FOOTER -->
+    <div id="footerContainer"></div>
+    <script>
+        (function() {
+            var req = new XMLHttpRequest();
+            req.open("GET", "footer.html", true);
+            req.onload = function() {
+                if (req.status === 200) {
+                    document.getElementById('footerContainer').innerHTML = req.responseText;
+                }
+            };
+            req.send();
+        })();
+    </script>
+    <script src="user.js"></script>
+</body>
+</html>

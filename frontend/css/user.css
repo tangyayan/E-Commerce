@@ -1,0 +1,503 @@
+/* 页面基础样式 */
+body {
+    margin: 0;
+    font-family: 'Lato', sans-serif;
+    background-color: #f5f5f5;
+}
+
+/* 主容器 */
+#userContainer {
+    padding: 90px 50px;
+}
+
+#userContainer h1 {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 40px;
+    color: #333;
+}
+
+/* 加载状态 */
+.loading {
+    text-align: center;
+    padding: 80px 20px;
+    color: #999;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.loading i {
+    font-size: 48px;
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* 错误状态 */
+.error {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.error h2 {
+    color: #ff4d4f;
+    margin-bottom: 10px;
+}
+
+.error p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.error button {
+    padding: 10px 20px;
+    background: rgb(3, 122, 122);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* 用户信息卡片 */
+.user-card, .shop-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.user-avatar {
+    font-size: 80px;
+    color: #ddd;
+}
+
+.user-details p {
+    margin: 10px 0;
+    color: #666;
+}
+
+.user-details strong {
+    color: #333;
+}
+
+/* 店铺信息 */
+.shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.shop-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.shop-status {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.shop-status.active {
+    background: #52c41a;
+    color: white;
+}
+
+.shop-details p {
+    margin: 10px 0;
+    color: #666;
+}
+
+.shop-details strong {
+    color: #333;
+}
+
+/* 没有店铺状态 */
+.no-shop {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.no-shop-icon {
+    font-size: 100px;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+.no-shop h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.no-shop p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+/* 按钮样式 */
+.btn-primary, .btn-secondary {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.btn-primary {
+    background: rgb(3, 122, 122);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: rgb(2, 100, 100);
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.shop-actions, .user-actions {
+    margin-top: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    #userContainer {
+        margin-top: 100px;
+        padding: 15px;
+    }
+    
+    #userContainer h1 {
+        font-size: 24px;
+    }
+    
+    .user-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .user-avatar {
+        font-size: 60px;
+    }
+    
+    .shop-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 555px) {
+    #userContainer {
+        margin-top: 90px;
+        padding: 10px;
+    }
+    
+    .user-card, .shop-card {
+        padding: 20px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+/* 收货地址部分 */
+.address-section {
+    margin-top: 30px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin: 0;
+    color: #333;
+}
+
+.addresses-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.address-card {
+    background: white;
+    border: 2px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s;
+}
+
+.address-card:hover {
+    border-color: rgb(3, 122, 122);
+    box-shadow: 0 4px 12px rgba(3, 122, 122, 0.1);
+}
+
+.address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.address-header h4 {
+    margin: 0;
+    color: #333;
+}
+
+.address-phone {
+    color: #666;
+    font-size: 14px;
+}
+
+.address-content {
+    margin: 15px 0;
+    color: #666;
+    line-height: 1.6;
+}
+
+.address-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+}
+
+.btn-edit {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.btn-edit:hover {
+    background: #e0e0e0;
+}
+
+.btn-delete {
+    background: #fff1f0;
+    color: #ff4d4f;
+}
+
+.btn-delete:hover {
+    background: #ffccc7;
+}
+
+.no-address {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 8px;
+    color: #999;
+}
+
+.no-address i {
+    font-size: 64px;
+    margin-bottom: 20px;
+    display: block;
+}
+
+/* 弹窗样式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.3s;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+}
+
+#addressForm {
+    padding: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: bold;
+}
+
+.required {
+    color: #ff4d4f;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: rgb(3, 122, 122);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .addresses-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .section-header button {
+        width: 100%;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 555px) {
+    .address-card {
+        padding: 15px;
+    }
+    
+    .address-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .address-actions {
+        flex-direction: column;
+    }
+    
+    .address-actions button {
+        width: 100%;
+    }
+}
