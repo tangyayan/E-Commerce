@@ -224,6 +224,27 @@ function createCartItem(item, itemTotal) {
     priceValue.textContent = `¥${parseFloat(item.now_price).toFixed(2)}`;
     priceDiv.appendChild(priceLabel);
     priceDiv.appendChild(priceValue);
+    // 计算降价比例
+    const snapshotPrice = parseFloat(item.price_snapshot || item.now_price);
+    const currentPrice = parseFloat(item.now_price);
+    const discountRate = ((snapshotPrice - currentPrice) / snapshotPrice * 100);
+    const hasPriceDropped = discountRate >= 10;
+    
+    // 如果有价格变化，显示快照价格（加入购物车时的价格）
+    if (snapshotPrice !== currentPrice) {
+        const snapshotPriceSpan = document.createElement('span');
+        snapshotPriceSpan.className = 'snapshot-price';
+        snapshotPriceSpan.textContent = `¥${snapshotPrice.toFixed(2)}`;
+        priceDiv.appendChild(snapshotPriceSpan);
+        
+        // 如果降价超过10%，显示降价标签
+        if (hasPriceDropped) {
+            const discountBadge = document.createElement('span');
+            discountBadge.className = 'discount-badge';
+            discountBadge.innerHTML = `<i class="fas fa-arrow-down"></i> 降价${Math.floor(discountRate)}%`;
+            priceDiv.appendChild(discountBadge);
+        }
+    }
     boxDiv.appendChild(priceDiv);
     
     // 数量控制

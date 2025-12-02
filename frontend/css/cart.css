@@ -602,3 +602,87 @@ body
     color: rgb(3, 122, 122);
     text-decoration: underline;
 }
+
+/* 价格和小计 */
+.item-price,
+.item-total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.price-label,
+.total-label {
+    font-size: 12px;
+    color: #999;
+}
+
+.price-value,
+.total-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ff4d4f;
+}
+
+/* 快照价格（加入购物车时的价格） */
+.snapshot-price {
+    font-size: 14px;
+    color: #999;
+    text-decoration: line-through;
+    margin-top: 2px;
+}
+
+/* 降价标签 */
+.discount-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff4d4f 100%);
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-top: 5px;
+    animation: pulse 2s infinite;
+}
+
+.discount-badge i {
+    font-size: 10px;
+}
+
+/* 降价标签动画 */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(255, 77, 79, 0.5);
+    }
+}
+
+/* 价格容器布局调整 */
+.item-price {
+    position: relative;
+}
+
+.item-price .price-value {
+    animation: priceHighlight 0.5s ease;
+}
+
+@keyframes priceHighlight {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+        color: #52c41a;
+    }
+    100% {
+        transform: scale(1);
+        color: #ff4d4f;
+    }
+}
