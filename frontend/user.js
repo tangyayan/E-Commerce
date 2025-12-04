@@ -28,14 +28,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('用户信息:', userResult);
 
         // 获取店铺信息
-        const shopResponse = await fetch(`${API_BASE_URL}/shop/user/${userInfo.account_id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        let shopResult = null;
+        if(userResponse.have_shop) {
+            const shopResponse = await fetch(`${API_BASE_URL}/shop/user/${userInfo.account_id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        const shopResult = await shopResponse.json();
-        console.log('店铺信息:', shopResult);
+            shopResult = await shopResponse.json();
+            console.log('店铺信息:', shopResult);
+        } 
 
         // 获取用户收货地址
         const addressResponse = await fetch(`${API_BASE_URL}/user/addresses`, {
@@ -48,7 +51,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('收货地址:', addressResult);
 
         // 渲染用户信息、店铺信息和收货地址
-        renderUserPage(userResult.user, shopResult.shop, addressResult.addresses || []);
+        // renderUserPage(userResult.user, shopResult.shop, addressResult.addresses || []);
+        if(user.have_shop) {
+            renderUserPage(userResult.user, shopResult.shop, addressResult.addresses || []);
+        } else {
+            renderUserPage(userResult.user, null, addressResult.addresses || []);
+        }
 
     } catch (error) {
         console.error('加载用户信息失败:', error);
@@ -70,48 +78,64 @@ function renderUserPage(user, shop, addresses) {
     
     let shopSection = '';
     
-    if (shop) {
-        // 用户有店铺：显示店铺信息和管理选项
-        shopSection = `
-            <div class="shop-section">
-                <h2>我的店铺</h2>
-                <div class="shop-info">
-                    <div class="shop-card">
-                        <div class="shop-header">
-                            <h3>${shop.shop_name}</h3>
-                            <span class="shop-status active">营业中</span>
-                        </div>
-                        <div class="shop-details">
-                            <p><strong>店铺ID:</strong> ${shop.shop_id}</p>
-                            <p><strong>创建时间:</strong> ${new Date(shop.created_at).toLocaleDateString()}</p>
-                            <p><strong>描述:</strong> ${shop.description || '暂无描述'}</p>
-                        </div>
-                        <div class="shop-actions">
-                            <button class="btn-primary" onclick="manageShop(${shop.shop_id})">
-                                <i class="fas fa-cog"></i> 管理店铺
-                            </button>
-                            <button class="btn-secondary" onclick="viewShop(${shop.shop_id})">
-                                <i class="fas fa-eye"></i> 查看店铺
-                            </button>
+    if(user.have_shop) {
+        if (shop) {
+            // 用户有店铺：显示店铺信息和管理选项
+            shopSection = `
+                <div class="shop-section">
+                    <h2>我的店铺</h2>
+                    <div class="shop-info">
+                        <div class="shop-card">
+                            <div class="shop-header">
+                                <h3>${shop.shop_name}</h3>
+                                <span class="shop-status active">营业中</span>
+                            </div>
+                            <div class="shop-details">
+                                <p><strong>店铺ID:</strong> ${shop.shop_id}</p>
+                                <p><strong>创建时间:</strong> ${new Date(shop.created_at).toLocaleDateString()}</p>
+                                <p><strong>描述:</strong> ${shop.description || '暂无描述'}</p>
+                            </div>
+                            <div class="shop-actions">
+                                <button class="btn-primary" onclick="manageShop(${shop.shop_id})">
+                                    <i class="fas fa-cog"></i> 管理店铺
+                                </button>
+                                <button class="btn-secondary" onclick="viewShop(${shop.shop_id})">
+                                    <i class="fas fa-eye"></i> 查看店铺
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-    } else {
-        // 用户没有店铺：显示创建店铺选项
+            `;
+        } else {
+            // 用户没有店铺：显示创建店铺选项
+            shopSection = `
+                <div class="shop-section">
+                    <h2>店铺管理</h2>
+                    <div class="no-shop">
+                        <div class="no-shop-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <h3>您还没有店铺</h3>
+                        <p>创建自己的店铺，开始销售商品吧！</p>
+                        <button class="btn-primary" onclick="createShop()">
+                            <i class="fas fa-plus"></i> 创建店铺
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    else {
         shopSection = `
             <div class="shop-section">
                 <h2>店铺管理</h2>
-                <div class="no-shop">
+                <div class="no-shop-permission">
                     <div class="no-shop-icon">
-                        <i class="fas fa-store"></i>
+                        <i class="fas fa-store-slash"></i>
                     </div>
-                    <h3>您还没有店铺</h3>
-                    <p>创建自己的店铺，开始销售商品吧！</p>
-                    <button class="btn-primary" onclick="createShop()">
-                        <i class="fas fa-plus"></i> 创建店铺
-                    </button>
+                    <h3>您没有创建店铺的权限</h3>
+                    <p>请联系管理员以获取更多信息。</p>
                 </div>
             </div>
         `;
@@ -178,8 +202,6 @@ function renderUserPage(user, shop, addresses) {
                     </div>
                 </div>
             </div>
-            
-            ${shopSection}
 
             <!-- 收货地址部分 -->
             <div class="address-section">
@@ -193,6 +215,8 @@ function renderUserPage(user, shop, addresses) {
                     ${addressesHtml}
                 </div>
             </div>
+
+            ${shopSection}
         </div>
 
         <!-- 添加/编辑地址弹窗 -->
@@ -429,7 +453,7 @@ function editProfile() {
     window.location.href = 'editProfile.html';
 }
 
-// 🔥 点击弹窗外部关闭弹窗
+// 点击弹窗外部关闭弹窗
 window.onclick = function(event) {
     const modal = document.getElementById('addressModal');
     if (event.target === modal) {
