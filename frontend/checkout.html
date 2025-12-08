@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>确认订单 | E-Commerce</title>
+    <link rel="stylesheet" href="css/checkout.css">
+    <!-- 引入 Font Awesome 图标库 (与 cart/orders 保持一致) -->
+    <script src="https://kit.fontawesome.com/4a3b1f73a2.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- HEADER -->
+    <div id="1"></div>
+    <script>
+        load("header.html");
+        function load(url) {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(1).innerHTML = req.responseText;
+        }
+    </script>
+    <script src="header.js"></script>
+
+    <!-- CHECKOUT CONTAINER -->
+    <div class="checkout-container">
+        <h1>确认订单</h1>
+        
+        <div class="checkout-layout">
+            <!-- 左侧：地址选择 -->
+            <div class="left-column">
+                <div class="section-card">
+                    <div class="section-title">
+                        <i class="fas fa-map-marker-alt"></i> 收货地址
+                    </div>
+                    <div id="addressList" class="address-selection">
+                        <div class="loading-placeholder">
+                            <i class="fas fa-spinner fa-spin"></i> 加载地址中...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：金额结算 -->
+            <div class="right-column">
+                <div class="section-card" id="orderSummary">
+                    <div class="section-title">
+                        <i class="fas fa-file-invoice-dollar"></i> 订单摘要
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>商品总数</span>
+                        <span id="totalCount">...</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>运费</span>
+                        <span>免运费</span>
+                    </div>
+                    
+                    <div class="summary-row total">
+                        <span>应付总额</span>
+                        <span id="totalAmount" class="total-price">计算中...</span>
+                    </div>
+
+                    <button id="submitOrderBtn" class="confirm-btn">提交订单</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div id="4"></div>
+    <script>
+        load("footer.html");
+        function load(url) {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(4).innerHTML = req.responseText;
+        }
+    </script>
+
+    <script src="checkout.js"></script>
+</body>
+</html>

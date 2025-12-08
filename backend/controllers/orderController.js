@@ -34,6 +34,7 @@ exports.getOrders = async (req, res) => {
 };
 
 // 创建订单
+// TODO：未检查库存数量，未减少库存
 exports.createOrder = async (req, res) => {
     const client = await pool.connect();
     try {

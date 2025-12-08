@@ -1,0 +1,198 @@
+body {
+    margin: 0;
+    font-family: 'Lato', sans-serif;
+    background-color: #f6f6f6;
+}
+
+/* 主容器 */
+.checkout-container {
+    padding: 120px 50px 90px 50px; /* 顶部留出 Header 空间 */
+    max-width: 1100px;
+    margin: 0 auto;
+    min-height: 60vh;
+}
+
+.checkout-container h1 {
+    text-align: center;
+    font-size: 32px;
+    margin-bottom: 40px;
+    color: #333;
+}
+
+/* 布局网格：左侧地址，右侧结算 */
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+/* 通用卡片样式 */
+.section-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 30px;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 地址列表 */
+.address-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.address-item {
+    border: 2px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.address-item:hover {
+    border-color: #b7eb8f;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.address-item.selected {
+    border-color: rgb(3, 122, 122);
+    background-color: rgba(3, 122, 122, 0.05);
+}
+
+.address-item.selected::after {
+    content: '✓';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: rgb(3, 122, 122);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 14px;
+}
+
+.addr-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.addr-phone {
+    font-weight: normal;
+    color: #666;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+.addr-detail {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
+/* 添加地址按钮 */
+.add-address-btn {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    cursor: pointer;
+    min-height: 100px;
+    transition: all 0.3s;
+}
+
+.add-address-btn:hover {
+    border-color: rgb(3, 122, 122);
+    color: rgb(3, 122, 122);
+}
+
+.add-address-btn i {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+/* 订单摘要（右侧） */
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 15px;
+    color: #666;
+}
+
+.summary-row.total {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    align-items: center;
+}
+
+.total-price {
+    color: #ff4d4f;
+    font-size: 24px;
+}
+
+/* 提交按钮 */
+.confirm-btn {
+    background: rgb(3, 122, 122);
+    color: white;
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-top: 20px;
+    font-family: 'Lato', sans-serif;
+}
+
+.confirm-btn:hover:not(:disabled) {
+    background: rgb(2, 100, 100);
+    box-shadow: 0 4px 12px rgba(3, 122, 122, 0.3);
+}
+
+.confirm-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* 加载状态 */
+.loading-placeholder {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+/* 响应式设计 */
+@media (max-width: 900px) {
+    .checkout-layout {
+        grid-template-columns: 1fr; /* 变为单列 */
+    }
+    
+    .checkout-container {
+        padding: 100px 20px 50px 20px;
+    }
+}

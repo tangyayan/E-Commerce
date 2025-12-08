@@ -121,7 +121,7 @@ WHERE s.shop_id = 1 AND oi.order_id IN (
 )
 GROUP BY s.shop_id, s.shop_name;
 
--- 额为什么购物车要自己添加
+-- 额为什么购物车要自己添加（应该是register的时候自动创建的）
 -- 5.1 创建购物车（如果不存在则创建）
 INSERT INTO Cart (account_id)
 VALUES (2);
