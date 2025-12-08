@@ -66,6 +66,15 @@ VALUES
   (2, 1), (2, 4),  -- SKU2: 黑色+512GB
   (3, 2), (3, 3);  -- SKU3: 白色+256GB
 
+-- 2.6 仓库进货 (初始化库存)
+-- 假设 warehouse 的 code 为 1 (由 1.3 步骤创建)
+-- 假设 sku_id 为 1, 2, 3 (由 2.4 步骤创建)
+INSERT INTO WarehouseStock (code, sku_id, stock)
+VALUES 
+  (1, 1, 100),  -- SKU1 进货 100 件
+  (1, 2, 50),   -- SKU2 进货 50 件
+  (1, 3, 200);  -- SKU3 进货 200 件
+
 
 -- ============================================================
 -- 测试场景3: 查看店铺销量
@@ -111,3 +120,10 @@ WHERE s.shop_id = 1 AND oi.order_id IN (
     SELECT order_id FROM Orders WHERE status IN ('PAID', 'SHIPPED', 'FINISHED')
 )
 GROUP BY s.shop_id, s.shop_name;
+
+-- 额为什么购物车要自己添加
+-- 5.1 创建购物车（如果不存在则创建）
+INSERT INTO Cart (account_id)
+VALUES (2);
+-- ON CONFLICT DO NOTHING;
+-- 假设返回 cart_id = 1

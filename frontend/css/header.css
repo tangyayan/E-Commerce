@@ -74,6 +74,13 @@ body
     font-size: 1.5em;
     margin-right: 25px;
 }
+
+.clipboard
+{
+    font-size: 1.5em;
+    margin-right: 25px;
+}
+
 #user
 {
     display: flex;
@@ -146,6 +153,10 @@ body
         font-size: 1.5em;
         margin: 10px 20px;
     }
+    .clipboard {
+        font-size: 1.5em;
+        margin: 10px 20px;
+    }
 }
 
 @media(max-width: 1090px)
@@ -176,6 +187,10 @@ body
     }
     .addedToCart
     {
+        font-size: 1.2em;
+        margin: 10px 20px;
+    }
+    .clipboard {
         font-size: 1.2em;
         margin: 10px 20px;
     }
