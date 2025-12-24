@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const userResult = await userResponse.json();
         console.log('用户信息:', userResult);
+        const userInfo = userResult.user;
 
         // 获取店铺信息
         let shopResult = null;
-        if(userResponse.have_shop) {
+        console.log('用户是否有店铺:', userInfo.have_shop);
+        if(userInfo.have_shop) {
             const shopResponse = await fetch(`${API_BASE_URL}/shop/user/${userInfo.account_id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -38,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             shopResult = await shopResponse.json();
             console.log('店铺信息:', shopResult);
-        } 
+        }
 
         // 获取用户收货地址
         const addressResponse = await fetch(`${API_BASE_URL}/user/addresses`, {
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 渲染用户信息、店铺信息和收货地址
         // renderUserPage(userResult.user, shopResult.shop, addressResult.addresses || []);
-        if(user.have_shop) {
+        if(userInfo.have_shop) {
             renderUserPage(userResult.user, shopResult.shop, addressResult.addresses || []);
         } else {
             renderUserPage(userResult.user, null, addressResult.addresses || []);
@@ -75,9 +77,9 @@ document.addEventListener('DOMContentLoaded', async () => {
  */
 function renderUserPage(user, shop, addresses) {
     const userContainer = document.getElementById('userContainer');
-    
+
     let shopSection = '';
-    
+
     if(user.have_shop) {
         if (shop) {
             // 用户有店铺：显示店铺信息和管理选项
@@ -93,7 +95,7 @@ function renderUserPage(user, shop, addresses) {
                             <div class="shop-details">
                                 <p><strong>店铺ID:</strong> ${shop.shop_id}</p>
                                 <p><strong>创建时间:</strong> ${new Date(shop.created_at).toLocaleDateString()}</p>
-                                <p><strong>描述:</strong> ${shop.description || '暂无描述'}</p>
+                                <p><strong>描述:</strong> ${shop.shop_description || '暂无描述'}</p>
                             </div>
                             <div class="shop-actions">
                                 <button class="btn-primary" onclick="manageShop(${shop.shop_id})">
@@ -154,9 +156,9 @@ function renderUserPage(user, shop, addresses) {
                     </div>
                     <div class="address-content">
                         <p>
-                            ${addressData.province || ''} 
-                            ${addressData.city || ''} 
-                            ${addressData.district || ''} 
+                            ${addressData.province || ''}
+                            ${addressData.city || ''}
+                            ${addressData.district || ''}
                             ${addressData.detail || ''}
                         </p>
                     </div>
@@ -183,7 +185,7 @@ function renderUserPage(user, shop, addresses) {
     userContainer.innerHTML = `
         <div class="user-profile">
             <h1>用户中心</h1>
-            
+
             <div class="user-info-section">
                 <h2>基本信息</h2>
                 <div class="user-card">
@@ -228,39 +230,39 @@ function renderUserPage(user, shop, addresses) {
                 </div>
                 <form id="addressForm" onsubmit="saveAddress(event)">
                     <input type="hidden" id="editAddressId" value="">
-                    
+
                     <div class="form-group">
                         <label for="recipientName">收货人姓名 <span class="required">*</span></label>
                         <input type="text" id="recipientName" required placeholder="请输入收货人姓名">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="phoneNumber">联系电话 <span class="required">*</span></label>
                         <input type="tel" id="phoneNumber" required placeholder="请输入11位手机号码" pattern="[0-9]{11}">
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="province">省份 <span class="required">*</span></label>
                             <input type="text" id="province" required placeholder="如：广东省">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="city">城市 <span class="required">*</span></label>
                             <input type="text" id="city" required placeholder="如：深圳市">
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="district">区/县 <span class="required">*</span></label>
                             <input type="text" id="district" required placeholder="如：南山区">
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="detail">详细地址 <span class="required">*</span></label>
                         <textarea id="detail" required placeholder="请输入详细地址，如街道、门牌号等" rows="3"></textarea>
                     </div>
-                    
+
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="closeAddressModal()">取消</button>
                         <button type="submit" class="btn-primary">保存</button>
@@ -278,11 +280,11 @@ function showAddAddressModal() {
     const modal = document.getElementById('addressModal');
     const modalTitle = document.getElementById('modalTitle');
     const form = document.getElementById('addressForm');
-    
+
     modalTitle.textContent = '添加收货地址';
     form.reset();
     document.getElementById('editAddressId').value = '';
-    
+
     modal.style.display = 'block';
 }
 
@@ -299,10 +301,10 @@ function closeAddressModal() {
  */
 async function saveAddress(event) {
     event.preventDefault();
-    
+
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     const editAddressId = document.getElementById('editAddressId').value;
-    
+
     const addressData = {
         recipient_name: document.getElementById('recipientName').value,
         phone_number: document.getElementById('phoneNumber').value,
@@ -313,10 +315,10 @@ async function saveAddress(event) {
             detail: document.getElementById('detail').value
         }
     };
-    
+
     try {
         let response;
-        
+
         if (editAddressId) {
             // 编辑地址
             response = await fetch(`${API_BASE_URL}/user/addresses/${editAddressId}`, {
@@ -338,9 +340,9 @@ async function saveAddress(event) {
                 body: JSON.stringify(addressData)
             });
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             alert(result.message || '保存成功');
             closeAddressModal();
@@ -359,22 +361,22 @@ async function saveAddress(event) {
  */
 async function editAddress(addressId) {
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/user/addresses`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             const address = result.addresses.find(addr => addr.address_id === addressId);
-            
+
             if (address) {
                 const addressData = typeof address.address === 'string' ? JSON.parse(address.address) : address.address;
-                
+
                 document.getElementById('editAddressId').value = address.address_id;
                 document.getElementById('recipientName').value = address.recipient_name;
                 document.getElementById('phoneNumber').value = address.phone_number;
@@ -382,7 +384,7 @@ async function editAddress(addressId) {
                 document.getElementById('city').value = addressData.city || '';
                 document.getElementById('district').value = addressData.district || '';
                 document.getElementById('detail').value = addressData.detail || '';
-                
+
                 document.getElementById('modalTitle').textContent = '编辑收货地址';
                 document.getElementById('addressModal').style.display = 'block';
             }
@@ -400,9 +402,9 @@ async function deleteAddress(addressId, recipientName) {
     if (!confirm(`确定要删除收货人"${recipientName}"的地址吗？`)) {
         return;
     }
-    
+
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/user/addresses/${addressId}`, {
             method: 'DELETE',
@@ -410,9 +412,9 @@ async function deleteAddress(addressId, recipientName) {
                 'Authorization': `Bearer ${token}`
             }
         });
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             alert(result.message || '删除成功');
             window.location.reload(); // 刷新页面

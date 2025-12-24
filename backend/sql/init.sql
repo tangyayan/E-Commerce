@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS Account (
 CREATE TABLE IF NOT EXISTS Shop (
     shop_id SERIAL PRIMARY KEY,
     account_id INT UNIQUE REFERENCES Account(account_id) ON DELETE CASCADE,--一个商家一个店铺
+    shop_description TEXT,
     shop_name VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -61,7 +62,7 @@ CREATE TABLE IF NOT EXISTS AttributeKey (
     spu_id INT,
     FOREIGN KEY (spu_id) REFERENCES SPU(spu_id)
 );
-CREATE TABLE IF NOT EXISTS AttributeValue ( 
+CREATE TABLE IF NOT EXISTS AttributeValue (
     value_id SERIAL PRIMARY KEY,
     attr_id INT,
     value VARCHAR(100),
@@ -84,12 +85,12 @@ BEGIN
     SELECT attr_id INTO new_attr_id
     FROM AttributeValue
     WHERE value_id = NEW.value_id;
-    
+
     -- 2. 获取 SKU 对应的 SPU ID
     SELECT spu_id INTO sku_spu_id
     FROM SKU
     WHERE sku_id = NEW.sku_id;
-    
+
     -- 3. 检查当前 SKU 是否已经有同一个 attr_id 的值
     IF EXISTS (
         SELECT 1
@@ -100,7 +101,7 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'SKU % already has a value for attribute %', NEW.sku_id, new_attr_id;
     END IF;
-    
+
     -- 4. 检查该 attr_id 是否属于 SKU 的 SPU
     IF NOT EXISTS (
         SELECT 1
@@ -108,10 +109,10 @@ BEGIN
         WHERE ak.attr_id = new_attr_id
         AND ak.spu_id = sku_spu_id
     ) THEN
-        RAISE EXCEPTION 'Attribute % does not belong to SPU % of SKU %', 
+        RAISE EXCEPTION 'Attribute % does not belong to SPU % of SKU %',
             new_attr_id, sku_spu_id, NEW.sku_id;
     END IF;
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
