@@ -1,0 +1,113 @@
+/**
+ * 店铺信息样式
+ */
+
+/* ===== 店铺信息卡片 ===== */
+#shop-container {
+    background: #fff;
+    padding: 28px 32px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    max-width: 900px;
+    margin: 0 auto 24px auto;
+    position: relative;
+}
+
+#shop-name {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+#shop-desc {
+    margin: 10px 0 16px 0;
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.shop-meta {
+    font-size: 14px;
+    color: #888;
+}
+
+/* ===== 编辑按钮 ===== */
+#edit-shop-btn {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background-color: #1677ff;
+    color: #fff;
+}
+
+#edit-shop-btn:hover {
+    background-color: #0958d9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+}
+
+/* ===== 编辑表单 ===== */
+#edit-shop-form {
+    max-width: 900px;
+    margin: 0 auto 24px auto;
+    background: #fff;
+    padding: 24px 28px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+#edit-shop-form label {
+    display: block;
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+#edit-shop-form input,
+#edit-shop-form textarea {
+    width: 100%;
+    margin-bottom: 14px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #d9d9d9;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+#edit-shop-form input:focus,
+#edit-shop-form textarea:focus {
+    outline: none;
+    border-color: #1677ff;
+}
+
+#edit-shop-form textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+#save-shop-btn {
+    background-color: #1677ff;
+    color: #fff;
+}
+
+#save-shop-btn:hover {
+    background-color: #0958d9;
+}
+
+#cancel-shop-btn {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+#cancel-shop-btn:hover {
+    background-color: #d9d9d9;
+}

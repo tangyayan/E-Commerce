@@ -1,0 +1,134 @@
+/**
+ * SKU表格样式
+ */
+
+/* ===== SKU区域 ===== */
+.sku-section {
+    margin-top: 24px;
+}
+
+.sku-section .table-container {
+    max-height: 500px;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.sku-section .table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.sku-section .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.sku-section .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.sku-section .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ===== SKU表格 ===== */
+#sku-table {
+    width: 100%;
+    min-width: 800px;
+    font-size: 13px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+#sku-table thead {
+    background-color: #fafafa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#sku-table th {
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #1a1a1a;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+#sku-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#sku-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+#sku-table td {
+    padding: 8px;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+/* ===== SKU输入框 ===== */
+.sku-input,
+.sku-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.sku-input:focus,
+.sku-select:focus {
+    outline: none;
+    border-color: #1677ff;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+.sku-select {
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.sku-select:hover {
+    border-color: #1677ff;
+}
+
+/* ===== 操作按钮 ===== */
+.section-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn-save-skus {
+    background-color: #1677ff;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-save-skus:hover {
+    background-color: #0958d9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+}
+
+.btn-save-skus:disabled {
+    background-color: #d9d9d9;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}

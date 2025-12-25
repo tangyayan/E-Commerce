@@ -1,0 +1,12 @@
+/**
+ * 店铺页面样式 - 主文件
+ * 导入所有模块化的 CSS 文件
+ */
+
+ @import url('./shop/base.css');
+ @import url('./shop/shopInfo.css');
+ @import url('./shop/productList.css');
+ @import url('./shop/modal.css');
+ @import url('./shop/attributes.css');
+ @import url('./shop/skuTable.css');
+ @import url('./shop/responsive.css');

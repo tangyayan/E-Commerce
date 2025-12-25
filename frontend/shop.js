@@ -524,13 +524,6 @@ async function addNewAttributeValue(attrIndex) {
             
             // 重新渲染
             renderAttributes();
-            
-            // 如果已有SKU，提示需要重新生成
-            if (currentSKUs.length > 0) {
-                if (confirm('添加属性值后需要重新生成SKU组合，是否继续？')) {
-                    generateSKUs();
-                }
-            }
         } else {
             alert('添加失败: ' + (result.message || '未知错误'));
         }
@@ -576,13 +569,6 @@ async function removeAttributeValue(attrIndex, valueIndex) {
             
             // 重新渲染
             renderAttributes();
-            
-            // 如果已有SKU，提示需要重新生成
-            if (currentSKUs.length > 0) {
-                if (confirm('删除属性值后需要重新生成SKU组合，是否继续？')) {
-                    generateSKUs();
-                }
-            }
         } else {
             alert('删除失败: ' + (result.message || '未知错误'));
         }
@@ -646,13 +632,6 @@ function makeAttrNameEditable(attrIndex, element) {
             if (result.success) {
                 attr.attr_name = newName;
                 renderAttributes();
-                
-                // 提示是否需要重新生成SKU
-                if (currentSKUs.length > 0) {
-                    if (confirm('修改属性名称后需要重新生成SKU组合,是否继续？')) {
-                        generateSKUs();
-                    }
-                }
             } else {
                 alert('保存失败: ' + (result.message || '未知错误'));
             }
@@ -746,13 +725,6 @@ function makeValueEditable(attrIndex, valueIndex, element) {
                 }
                 
                 renderAttributes();
-                
-                // 提示是否需要重新生成SKU
-                if (currentSKUs.length > 0) {
-                    if (confirm('修改属性值后需要重新生成SKU组合,是否继续？')) {
-                        generateSKUs();
-                    }
-                }
             } else {
                 alert('保存失败: ' + (result.message || '未知错误'));
             }
@@ -776,64 +748,6 @@ function makeValueEditable(attrIndex, valueIndex, element) {
     element.appendChild(input);
     input.focus();
     input.select();
-}
-
-// 生成SKU组合
-function generateSKUs() {
-    // 过滤有效属性
-    const validAttrs = currentAttributes.filter(attr => 
-        attr.attr_name && attr.values && attr.values.length > 0
-    );
-
-    if (validAttrs.length === 0) {
-        alert('请先添加至少一个属性');
-        return;
-    }
-
-    // 生成笛卡尔积
-    const combinations = cartesianProduct(validAttrs.map(attr => attr.values));
-    
-    // 创建SKU
-    currentSKUs = combinations.map((combo, index) => {
-        // 检查是否已存在相同组合的SKU
-        const existing = currentSKUs.find(sku => {
-            if (!sku.attributes) return false;
-            return JSON.stringify(sku.attributes) === JSON.stringify(combo);
-        });
-
-        if (existing) {
-            return existing;
-        }
-
-        // 创建新SKU
-        return {
-            sku_id: null, // 新SKU
-            attributes: combo,
-            origin_price: 0,
-            now_price: 0,
-            stock: 0,
-            barcode: ''
-        };
-    });
-
-    renderSKUs();
-}
-
-// 笛卡尔积函数
-function cartesianProduct(arrays) {
-    if (arrays.length === 0) return [[]];
-    if (arrays.length === 1) return arrays[0].map(v => [v]);
-    
-    const result = [];
-    const rest = cartesianProduct(arrays.slice(1));
-    
-    arrays[0].forEach(value => {
-        rest.forEach(combination => {
-            result.push([value, ...combination]);
-        });
-    });
-    
-    return result;
 }
 
 // 渲染SKU表格
@@ -860,38 +774,63 @@ function renderSKUs() {
         const tr = document.createElement('tr');
         
         // SKU ID
-        let cells = `<td>${sku.sku_id || '新增'}</td>`;
+        let cells = `<td style="width: 80px;">${sku.sku_id || '新增'}</td>`;
         
-        // 属性值
+        // 属性值 - 改为下拉选择
         if (sku.attributes) {
-            sku.attributes.forEach(attrValue => {
-                cells += `<td>${attrValue}</td>`;
+            sku.attributes.forEach((attrValue, attrIndex) => {
+                const attr = currentAttributes.find(a => a.attr_id === attrValue.attr_id);
+                if (attr) {
+                    cells += `
+                        <td style="width: 120px;">
+                            <select class="sku-select" onchange="updateSKUAttribute(${index}, ${attrIndex}, this.value)">
+                                ${attr.values.map(v => {
+                                    const vText = typeof v === 'string' ? v : v.value;
+                                    const vId = typeof v === 'string' ? null : v.value_id;
+                                    const selected = vId === attrValue.value_id || vText === attrValue.value ? 'selected' : '';
+                                    return `<option value="${vId}" ${selected}>${escapeHtml(vText)}</option>`;
+                                }).join('')}
+                            </select>
+                        </td>
+                    `;
+                } else {
+                    cells += `<td style="width: 120px;">${attrValue.value}</td>`;
+                }
+            });
+        } else {
+            // 如果没有属性值,填充空列
+            currentAttributes.forEach(() => {
+                cells += `<td style="width: 120px;">-</td>`;
             });
         }
         
-        // 价格和库存
+        // 价格和库存 - 添加固定宽度
         cells += `
-            <td>
+            <td style="width: 100px;">
                 <input type="number" class="sku-input" step="0.01" min="0"
                        value="${sku.origin_price || ''}" 
-                       onchange="updateSKUField(${index}, 'origin_price', this.value)">
+                       onchange="updateSKUField(${index}, 'origin_price', this.value)"
+                       placeholder="原价">
             </td>
-            <td>
+            <td style="width: 100px;">
                 <input type="number" class="sku-input" step="0.01" min="0"
                        value="${sku.now_price || ''}" 
-                       onchange="updateSKUField(${index}, 'now_price', this.value)">
+                       onchange="updateSKUField(${index}, 'now_price', this.value)"
+                       placeholder="现价">
             </td>
-            <td>
+            <td style="width: 80px;">
                 <input type="number" class="sku-input" min="0"
                        value="${sku.stock || ''}" 
-                       onchange="updateSKUField(${index}, 'stock', this.value)">
+                       onchange="updateSKUField(${index}, 'stock', this.value)"
+                       placeholder="库存">
             </td>
-            <td>
+            <td style="width: 150px;">
                 <input type="text" class="sku-input"
                        value="${sku.barcode || ''}" 
-                       onchange="updateSKUField(${index}, 'barcode', this.value)">
+                       onchange="updateSKUField(${index}, 'barcode', this.value)"
+                       placeholder="条形码">
             </td>
-            <td>
+            <td style="width: 80px;">
                 <button type="button" class="btn-delete-small" onclick="deleteSKU(${index})">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -901,6 +840,26 @@ function renderSKUs() {
         tr.innerHTML = cells;
         tbody.appendChild(tr);
     });
+}
+
+// 更新SKU属性值
+function updateSKUAttribute(skuIndex, attrIndex, valueId) {
+    const sku = currentSKUs[skuIndex];
+    if (!sku.attributes || !sku.attributes[attrIndex]) return;
+    
+    const attr = currentAttributes.find(a => a.attr_id === sku.attributes[attrIndex].attr_id);
+    if (!attr) return;
+    
+    const selectedValue = attr.values.find(v => {
+        const vId = typeof v === 'string' ? null : v.value_id;
+        return vId == valueId;
+    });
+    
+    if (selectedValue) {
+        sku.attributes[attrIndex].value_id = typeof selectedValue === 'string' ? null : selectedValue.value_id;
+        sku.attributes[attrIndex].value = typeof selectedValue === 'string' ? selectedValue : selectedValue.value;
+        sku.isModified = true; // 标记为已修改
+    }
 }
 
 // 更新SKU字段

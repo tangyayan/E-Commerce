@@ -1,0 +1,114 @@
+/**
+ * 商品列表样式
+ */
+
+/* ===== 商品列表 ===== */
+#product-list {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+#product-list h2 {
+    margin-bottom: 20px;
+    font-size: 22px;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* ===== 商品列表头部 ===== */
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* ===== 表格样式 ===== */
+.table-container {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#products-table {
+    width: 100%;
+    border-collapse: collapse;
+    display: block;
+}
+
+#products-table thead,
+#products-table tbody {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+#products-table thead {
+    background-color: #fafafa;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+#products-table th {
+    padding: 16px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 14px;
+}
+
+#products-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+#products-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+.clickable-row {
+    cursor: pointer;
+}
+
+#products-table td {
+    padding: 12px;
+    font-size: 14px;
+    color: #333;
+}
+
+.img-cell img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.name-cell {
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+.desc-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #666;
+}
+
+.price-cell {
+    color: #ff4d4f;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.stock-cell {
+    color: #666;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}

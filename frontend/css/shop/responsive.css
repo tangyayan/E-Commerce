@@ -1,0 +1,124 @@
+/**
+ * 响应式样式
+ */
+
+/* ===== 平板和移动端 (≤768px) ===== */
+@media (max-width: 768px) {
+    /* 店铺信息 */
+    #shop-container {
+        padding: 20px 16px;
+    }
+
+    #edit-shop-btn {
+        position: static;
+        margin-top: 16px;
+        width: 100%;
+    }
+
+    #shop-name {
+        font-size: 24px;
+    }
+
+    /* 表单 */
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions button {
+        width: 100%;
+    }
+
+    /* 表格 */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .desc-cell {
+        max-width: 150px;
+    }
+
+    /* 商品列表 */
+    .product-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .actions-cell {
+        flex-direction: column;
+    }
+
+    /* 模态框 */
+    .modal-content {
+        width: 95%;
+        margin: 1% auto;
+    }
+
+    .modal-large .modal-content {
+        max-height: 95vh;
+    }
+
+    .modal-body {
+        max-height: calc(95vh - 140px);
+        padding: 16px;
+    }
+
+    /* 属性管理 */
+    .attribute-display-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .btn-delete-attr,
+    .new-attr-actions {
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .new-attr-actions {
+        justify-content: stretch;
+    }
+
+    .btn-confirm-attr,
+    .btn-cancel-attr {
+        flex: 1;
+    }
+
+    .add-value-input {
+        min-width: 100px;
+        flex: 1;
+    }
+
+    /* SKU表格 */
+    #sku-table {
+        font-size: 12px;
+    }
+
+    #sku-table th,
+    #sku-table td {
+        padding: 6px 4px;
+    }
+
+    .sku-input,
+    .sku-select {
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+
+    .section-actions {
+        flex-direction: column;
+    }
+
+    .btn-save-skus,
+    .btn-generate-sku {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ===== 小屏幕手机 (≤480px) ===== */
+@media (max-width: 480px) {
+    #products {
+        grid-template-columns: 1fr;
+    }
+}

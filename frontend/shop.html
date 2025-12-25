@@ -10,7 +10,14 @@
     <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16"> 
     <!-- CSS -->
     <link rel="stylesheet" href="css/header.css">
-    <link rel="stylesheet" href="css/shop.css">
+    <!-- 引入模块化CSS -->
+    <link rel="stylesheet" href="css/shop/base.css">
+    <link rel="stylesheet" href="css/shop/shopInfo.css">
+    <link rel="stylesheet" href="css/shop/productList.css">
+    <link rel="stylesheet" href="css/shop/modal.css">
+    <link rel="stylesheet" href="css/shop/attributes.css">
+    <link rel="stylesheet" href="css/shop/skuTable.css">
+    <link rel="stylesheet" href="css/shop/responsive.css">
     
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/b921c4663e.js" crossorigin="anonymous"></script>
@@ -154,13 +161,13 @@
                         <table id="sku-table">
                             <thead>
                                 <tr>
-                                    <th>SKU ID</th>
+                                    <th style="width: 80px;">SKU ID</th>
                                     <th id="sku-attr-headers"></th>
-                                    <th>原价</th>
-                                    <th>现价</th>
-                                    <th>库存</th>
-                                    <th>条形码</th>
-                                    <th>操作</th>
+                                    <th style="width: 100px;">原价</th>
+                                    <th style="width: 100px;">现价</th>
+                                    <th style="width: 80px;">库存</th>
+                                    <th style="width: 150px;">条形码</th>
+                                    <th style="width: 80px;">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="sku-tbody"></tbody>
@@ -189,6 +196,12 @@
             req.send();
         })();
     </script>
-    <script src="shop.js"></script>
+    <!-- <script src="shop.js"></script> -->
+    <script src="shop/shopInfo.js"></script>
+    <script src="shop/productList.js"></script>
+    <script src="shop/productEdit.js"></script>
+    <script src="shop/attributes.js"></script>
+    <script src="shop/skuManage.js"></script>
+    <script src="shop/init.js"></script>
 </body>
 </html>

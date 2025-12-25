@@ -453,7 +453,7 @@ hr {
     padding: 0;
     border-radius: 12px;
     width: 90%;
-    max-width: 600px;
+    max-width: 1100px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: slideDown 0.3s ease;
     position: relative; /* 确保定位正确 */
@@ -548,7 +548,7 @@ hr {
 
 /* ===== 大尺寸模态框 ===== */
 .modal-large .modal-content {
-    max-width: 1200px;
+    max-width: 1400px;
     max-height: 90vh; /* 限制最大高度 */
     overflow: hidden; /* 隐藏内容溢出 */
     display: flex;
@@ -625,6 +625,135 @@ hr {
     background: #fff;
     border-radius: 0 0 12px 12px;
     flex-shrink: 0; /* 固定底部 */
+}
+
+/* ===== SKU表格样式 ===== */
+.sku-section {
+    margin-top: 24px;
+}
+
+#sku-table {
+    width: 100%;
+    font-size: 13px;
+    border-collapse: collapse;
+    table-layout: fixed; /* 固定表格布局 */
+}
+
+#sku-table thead {
+    background-color: #fafafa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#sku-table th {
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #1a1a1a;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#sku-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+#sku-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+#sku-table td {
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.sku-input,
+.sku-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+.sku-input:focus,
+.sku-select:focus {
+    outline: none;
+    border-color: #1677ff;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+.sku-select {
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.sku-select:hover {
+    border-color: #1677ff;
+}
+
+/* 表格容器滚动优化 */
+.sku-section .table-container {
+    max-height: 500px;
+    overflow: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.sku-section .table-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.sku-section .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.sku-section .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.sku-section .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 保存按钮组 */
+.section-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.btn-save-skus {
+    background-color: #1677ff;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 14px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-save-skus:hover {
+    background-color: #0958d9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+}
+
+.btn-save-skus:disabled {
+    background-color: #d9d9d9;
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* ===== 属性管理样式 ===== */
@@ -1046,6 +1175,31 @@ hr {
     .add-value-input {
         min-width: 100px;
         flex: 1;
+    }
+
+    #sku-table {
+        font-size: 12px;
+    }
+
+    #sku-table th,
+    #sku-table td {
+        padding: 6px 4px;
+    }
+
+    .sku-input,
+    .sku-select {
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+
+    .section-actions {
+        flex-direction: column;
+    }
+
+    .btn-save-skus,
+    .btn-generate-sku {
+        width: 100%;
+        justify-content: center;
     }
 }
 
