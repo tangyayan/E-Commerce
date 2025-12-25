@@ -628,15 +628,192 @@ hr {
 }
 
 /* ===== 属性管理样式 ===== */
-.attribute-row {
+.attribute-display-row {
     display: grid;
     grid-template-columns: 200px 1fr auto;
-    gap: 12px;
+    gap: 16px;
     align-items: start;
-    margin-bottom: 12px;
-    padding: 12px;
+    margin-bottom: 16px;
+    padding: 16px;
     background: #fafafa;
     border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.attr-display-name,
+.attr-display-values {
+    display: flex;
+    flex-direction: column;
+}
+
+.attr-display-name label,
+.attr-display-values label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.attr-name-display {
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.attr-values-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.attr-value-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #e6f4ff;
+    border: 1px solid #91caff;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #0958d9;
+    transition: all 0.2s ease;
+}
+
+.attr-value-tag:hover {
+    background: #bae0ff;
+    border-color: #69b1ff;
+}
+
+.remove-value-btn {
+    background: none;
+    border: none;
+    color: #ff4d4f;
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.remove-value-btn:hover {
+    background-color: rgba(255, 77, 79, 0.1);
+}
+
+.remove-value-btn i {
+    font-size: 10px;
+}
+
+.add-value-container {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.add-value-input {
+    padding: 6px 10px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    font-size: 13px;
+    min-width: 150px;
+    transition: border-color 0.3s ease;
+}
+
+.add-value-input:focus {
+    outline: none;
+    border-color: #1677ff;
+}
+
+.btn-add-value {
+    background-color: #52c41a;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-add-value:hover {
+    background-color: #389e0d;
+}
+
+.btn-delete-attr {
+    background-color: #ff4d4f;
+    color: #fff;
+    padding: 8px 12px;
+    align-self: flex-start;
+    margin-top: 24px;
+}
+
+.btn-delete-attr:hover {
+    background-color: #d9363e;
+}
+
+.attr-name-input-new {
+    width: 70%;
+    padding: 10px 12px;
+    border: 1px solid #1677ff;
+    border-radius: 6px;
+    font-size: 14px;
+    box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
+
+.attr-name-input-new:focus {
+    outline: none;
+    border-color: #0958d9;
+}
+
+.new-attr-actions {
+    display: flex;
+    gap: 8px;
+    align-self: flex-start;
+    margin-top: 24px;
+}
+
+.btn-confirm-attr,
+.btn-cancel-attr {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+}
+
+.btn-confirm-attr {
+    background-color: #52c41a;
+    color: #fff;
+}
+
+.btn-confirm-attr:hover {
+    background-color: #389e0d;
+    transform: scale(1.05);
+}
+
+.btn-cancel-attr {
+    background-color: #ff4d4f;
+    color: #fff;
+}
+
+.btn-cancel-attr:hover {
+    background-color: #d9363e;
+    transform: scale(1.05);
+}
+
+/* 必填标记 */
+.required {
+    color: #ff4d4f;
+    margin-left: 2px;
 }
 
 .attr-name-group,
@@ -797,6 +974,36 @@ hr {
     .modal-body {
         max-height: calc(95vh - 140px);
         padding: 16px;
+    }
+}
+
+
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+    .attribute-display-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .btn-delete-attr,
+    .new-attr-actions {
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .new-attr-actions {
+        justify-content: stretch;
+    }
+
+    .btn-confirm-attr,
+    .btn-cancel-attr {
+        flex: 1;
+    }
+
+    .add-value-input {
+        min-width: 100px;
+        flex: 1;
     }
 }
 

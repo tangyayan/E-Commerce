@@ -201,26 +201,284 @@ function renderAttributes() {
 
     currentAttributes.forEach((attr, index) => {
         const attrDiv = document.createElement('div');
-        attrDiv.className = 'attribute-row';
-        attrDiv.innerHTML = `
-            <div class="attr-name-group">
-                <label>属性名称</label>
-                <input type="text" class="attr-name-input" value="${attr.attr_name}" 
-                       onchange="updateAttributeName(${index}, this.value)">
-            </div>
-            <div class="attr-values-group">
-                <label>属性值 <span class="hint">(多个值用逗号分隔)</span></label>
-                <input type="text" class="attr-values-input" 
-                       value="${attr.values ? attr.values.join(',') : ''}"
-                       onchange="updateAttributeValues(${index}, this.value)"
-                       placeholder="例如: 红色,蓝色,黑色">
-            </div>
-            <button type="button" class="btn-add-attr" onclick="addAttribute(${index})">
-                <i class="fa-solid fa-plus"></i>
+        attrDiv.className = 'attribute-display-row';
+        
+        // 属性名称（只读显示）
+        const attrNameDiv = document.createElement('div');
+        attrNameDiv.className = 'attr-display-name';
+        attrNameDiv.innerHTML = `
+            <label>属性名称</label>
+            <div class="attr-name-display">${escapeHtml(attr.attr_name)}</div>
+        `;
+        attrDiv.appendChild(attrNameDiv);
+        
+        // 属性值列表（标签形式显示，可删除）
+        const attrValuesDiv = document.createElement('div');
+        attrValuesDiv.className = 'attr-display-values';
+        attrValuesDiv.innerHTML = `<label>属性值</label>`;
+        
+        const valuesContainer = document.createElement('div');
+        valuesContainer.className = 'attr-values-container';
+        
+        // 渲染现有属性值
+        if (attr.values && attr.values.length > 0) {
+            attr.values.forEach((value, valueIndex) => {
+                const valueText = typeof value === 'string' ? value : (value.value || '');
+                const valueTag = document.createElement('span');
+                valueTag.className = 'attr-value-tag';
+                valueTag.innerHTML = `
+                    ${escapeHtml(valueText)}
+                    <button type="button" class="remove-value-btn" onclick="removeAttributeValue(${index}, ${valueIndex})" title="删除">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                valuesContainer.appendChild(valueTag);
+            });
+        }
+        
+        // 添加新值的输入框
+        const addValueDiv = document.createElement('div');
+        addValueDiv.className = 'add-value-container';
+        addValueDiv.innerHTML = `
+            <input type="text" 
+                   class="add-value-input" 
+                   id="new-value-${index}" 
+                   placeholder="输入新属性值"
+                   onkeypress="if(event.key === 'Enter') { event.preventDefault(); addNewAttributeValue(${index}); }">
+            <button type="button" class="btn-add-value" onclick="addNewAttributeValue(${index})" title="添加属性值">
+                <i class="fas fa-plus"></i>
             </button>
         `;
+        valuesContainer.appendChild(addValueDiv);
+        
+        attrValuesDiv.appendChild(valuesContainer);
+        attrDiv.appendChild(attrValuesDiv);
+        
         container.appendChild(attrDiv);
     });
+}
+
+function addAttributeRow() {
+    // 创建临时索引
+    const tempIndex = currentAttributes.length;
+    
+    // 添加临时属性(属性名为空,等待用户输入)
+    currentAttributes.push({
+        attr_id: null,
+        attr_name: '',
+        values: [],
+        isNew: true // 标记为新建
+    });
+    
+    renderAttributesWithNewRow(tempIndex);
+}
+// 渲染属性列表(包含新建行)
+function renderAttributesWithNewRow(newIndex) {
+    const container = document.getElementById('attributesContainer');
+    container.innerHTML = '';
+
+    const addAttrButton = document.querySelector('.btn-add-attribute');
+    if (addAttrButton) {
+        addAttrButton.disabled = true; // 禁用添加按钮，防止多次点击
+    }
+
+    currentAttributes.forEach((attr, index) => {
+        const attrDiv = document.createElement('div');
+        attrDiv.className = 'attribute-display-row';
+        
+        // 如果是新建的属性,显示输入框
+        if (attr.isNew && index === newIndex) {
+            attrDiv.innerHTML = `
+                <div class="attr-display-name">
+                    <label>属性名称 <span class="required">*</span></label>
+                    <input type="text" 
+                           class="attr-name-input-new" 
+                           id="new-attr-name-${index}" 
+                           placeholder="例如：颜色、尺寸"
+                           autofocus>
+                </div>
+                <div class="attr-display-values">
+                    <label>属性值 <span class="required">*</span></label>
+                    <div class="attr-values-container">
+                        <div class="add-value-container">
+                            <input type="text" 
+                                   class="attr-name-input-new" 
+                                   id="new-value-${index}" 
+                                   placeholder="输入属性值后按回车添加"
+                                   onkeypress="if(event.key === 'Enter') { event.preventDefault(); addNewAttributeValue(${index}); }">
+                            <button type="button" class="btn-add-value" onclick="addNewAttributeValue(${index})" title="添加属性值">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="new-attr-actions">
+                    <button type="button" class="btn-confirm-attr" onclick="confirmNewAttribute(${index})" title="确认">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button type="button" class="btn-cancel-attr" onclick="cancelNewAttribute(${index})" title="取消">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        } else {
+            // 正常显示已有属性
+            const attrNameDiv = document.createElement('div');
+            attrNameDiv.className = 'attr-display-name';
+            attrNameDiv.innerHTML = `
+                <label>属性名称</label>
+                <div class="attr-name-display">${escapeHtml(attr.attr_name)}</div>
+            `;
+            attrDiv.appendChild(attrNameDiv);
+            
+            const attrValuesDiv = document.createElement('div');
+            attrValuesDiv.className = 'attr-display-values';
+            attrValuesDiv.innerHTML = `<label>属性值</label>`;
+            
+            const valuesContainer = document.createElement('div');
+            valuesContainer.className = 'attr-values-container';
+            
+            // 渲染现有属性值
+            if (attr.values && attr.values.length > 0) {
+                attr.values.forEach((value, valueIndex) => {
+                    const valueText = typeof value === 'string' ? value : (value.value || '');
+                    const valueTag = document.createElement('span');
+                    valueTag.className = 'attr-value-tag';
+                    valueTag.innerHTML = `
+                        ${escapeHtml(valueText)}
+                    `;
+                    valuesContainer.appendChild(valueTag);
+                });
+            }
+            
+            attrValuesDiv.appendChild(valuesContainer);
+            attrDiv.appendChild(attrValuesDiv);
+        }
+        
+        container.appendChild(attrDiv);
+    });
+}
+
+// 确认新建属性
+function confirmNewAttribute(index) {
+    const attr = currentAttributes[index];
+    const nameInput = document.getElementById(`new-attr-name-${index}`);
+    const attrName = nameInput ? nameInput.value.trim() : '';
+    
+    // 验证属性名
+    if (!attrName) {
+        alert('属性名称不能为空！');
+        nameInput.focus();
+        return;
+    }
+    
+    // 检查是否已存在同名属性(排除自身)
+    const exists = currentAttributes.some((a, i) => 
+        i !== index && a.attr_name === attrName
+    );
+    
+    if (exists) {
+        alert('该属性名称已存在！');
+        nameInput.focus();
+        return;
+    }
+    
+    // 验证至少有一个属性值
+    if (!attr.values || attr.values.length === 0) {
+        alert('请至少添加一个属性值！');
+        const valueInput = document.getElementById(`new-value-${index}`);
+        if (valueInput) valueInput.focus();
+        return;
+    }
+    
+    // 保存属性名
+    attr.attr_name = attrName;
+    delete attr.isNew;
+    
+    // 重新渲染
+    renderAttributes();
+    const addAttrButton = document.querySelector('.btn-add-attribute');
+    if (addAttrButton) {
+        addAttrButton.disabled = false;
+    }
+}
+
+// 取消新建属性
+function cancelNewAttribute(index) {
+    currentAttributes.splice(index, 1);
+    renderAttributes();
+    const addAttrButton = document.querySelector('.btn-add-attribute');
+    if (addAttrButton) {
+        addAttrButton.disabled = false;
+    }
+}
+
+// 添加新的属性值
+function addNewAttributeValue(attrIndex) {
+    const input = document.getElementById(`new-value-${attrIndex}`);
+    const newValue = input ? input.value.trim() : '';
+    
+    if (!newValue) {
+        alert('请输入属性值');
+        return;
+    }
+    
+    const attr = currentAttributes[attrIndex];
+    
+    // 检查是否已存在该值
+    const exists = attr.values.some(v => {
+        const existingValue = typeof v === 'string' ? v : (v.value || '');
+        return existingValue === newValue;
+    });
+    
+    if (exists) {
+        alert('该属性值已存在！');
+        input.value = '';
+        return;
+    }
+    
+    // 添加新值
+    attr.values.push({ value: newValue });
+    input.value = '';
+    
+    // 如果是新建属性,重新渲染带输入框的视图
+    if (attr.isNew) {
+        renderAttributesWithNewRow(attrIndex);
+    } else {
+        // 重新渲染
+        renderAttributes();
+        
+        // 如果已有SKU，提示需要重新生成
+        if (currentSKUs.length > 0) {
+            if (confirm('添加属性值后需要重新生成SKU组合，是否继续？')) {
+                generateSKUs();
+            }
+        }
+    }
+}
+
+// 删除属性值
+function removeAttributeValue(attrIndex, valueIndex) {
+    const attr = currentAttributes[attrIndex];
+    const value = attr.values[valueIndex];
+    const valueText = typeof value === 'string' ? value : (value.value || '');
+    
+    if (!confirm(`确定删除属性值"${valueText}"吗？`)) {
+        return;
+    }
+    
+    // 删除该值
+    attr.values.splice(valueIndex, 1);
+    
+    // 重新渲染
+    renderAttributes();
+    
+    // 如果已有SKU，提示需要重新生成
+    if (currentSKUs.length > 0) {
+        if (confirm('删除属性值后需要重新生成SKU组合，是否继续？')) {
+            generateSKUs();
+        }
+    }
 }
 
 // 更新属性名称
@@ -463,6 +721,16 @@ async function saveAllChanges() {
 function closeEditModal() {
     document.getElementById('editProductModal').style.display = 'none';
     document.getElementById('editProductForm').reset();
+
+    currentAttributes = []
+    currentSKUs = []
+
+    renderAttributes();
+    renderSKUs();
+    const addAttrButton = document.querySelector('.btn-add-attribute');
+    if (addAttrButton) {
+        addAttrButton.disabled = false;
+    }
 }
 
 // 保存商品
