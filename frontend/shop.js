@@ -203,12 +203,15 @@ function renderAttributes() {
         const attrDiv = document.createElement('div');
         attrDiv.className = 'attribute-display-row';
         
-        // 属性名称（只读显示）
+        // 属性名称（可编辑）
         const attrNameDiv = document.createElement('div');
         attrNameDiv.className = 'attr-display-name';
         attrNameDiv.innerHTML = `
             <label>属性名称</label>
-            <div class="attr-name-display">${escapeHtml(attr.attr_name)}</div>
+            <div class="editable-field" onclick="makeAttrNameEditable(${index}, this)">
+                <span class="attr-name-text">${escapeHtml(attr.attr_name)}</span>
+                <i class="fas fa-edit edit-icon"></i>
+            </div>
         `;
         attrDiv.appendChild(attrNameDiv);
         
@@ -225,9 +228,9 @@ function renderAttributes() {
             attr.values.forEach((value, valueIndex) => {
                 const valueText = typeof value === 'string' ? value : (value.value || '');
                 const valueTag = document.createElement('span');
-                valueTag.className = 'attr-value-tag';
+                valueTag.className = 'attr-value-tag editable-tag';
                 valueTag.innerHTML = `
-                    ${escapeHtml(valueText)}
+                    <span class="value-text" onclick="makeValueEditable(${index}, ${valueIndex}, this)">${escapeHtml(valueText)}</span>
                     <button type="button" class="remove-value-btn" onclick="removeAttributeValue(${index}, ${valueIndex})" title="删除">
                         <i class="fas fa-times"></i>
                     </button>
@@ -295,6 +298,7 @@ function renderAttributesWithNewRow(newIndex) {
                            class="attr-name-input-new" 
                            id="new-attr-name-${index}" 
                            placeholder="例如：颜色、尺寸"
+                           oninput="updateAttributeName(${index}, this.value)"
                            autofocus>
                 </div>
                 <div class="attr-display-values">
@@ -304,11 +308,9 @@ function renderAttributesWithNewRow(newIndex) {
                             <input type="text" 
                                    class="attr-name-input-new" 
                                    id="new-value-${index}" 
-                                   placeholder="输入属性值后按回车添加"
-                                   onkeypress="if(event.key === 'Enter') { event.preventDefault(); addNewAttributeValue(${index}); }">
-                            <button type="button" class="btn-add-value" onclick="addNewAttributeValue(${index})" title="添加属性值">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                                   placeholder="至少输入一个属性值"
+                                   oninput="updateAttributeValues(${index}, this.value)"
+                                   >
                         </div>
                     </div>
                 </div>
@@ -360,10 +362,12 @@ function renderAttributesWithNewRow(newIndex) {
 }
 
 // 确认新建属性
-function confirmNewAttribute(index) {
+async function confirmNewAttribute(index) {
     const attr = currentAttributes[index];
     const nameInput = document.getElementById(`new-attr-name-${index}`);
     const attrName = nameInput ? nameInput.value.trim() : '';
+    
+    console.log('确认新建属性:', { index, attrName, values: attr.values });
     
     // 验证属性名
     if (!attrName) {
@@ -385,22 +389,77 @@ function confirmNewAttribute(index) {
     
     // 验证至少有一个属性值
     if (!attr.values || attr.values.length === 0) {
-        alert('请至少添加一个属性值！');
+        alert('请至少添加一个属性值！\n提示:在输入框输入值,用逗号分隔多个值');
         const valueInput = document.getElementById(`new-value-${index}`);
         if (valueInput) valueInput.focus();
         return;
     }
     
-    // 保存属性名
-    attr.attr_name = attrName;
-    delete attr.isNew;
+    // 保存到数据库
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     
-    // 重新渲染
-    renderAttributes();
-    const addAttrButton = document.querySelector('.btn-add-attribute');
-    if (addAttrButton) {
-        addAttrButton.disabled = false;
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/add`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                attr_name: attrName,
+                values: attr.values
+            })
+        });
+        
+        const result = await response.json();
+        console.log('保存属性结果:', result);
+        
+        if (!result.success) {
+            alert('保存属性失败: ' + (result.message || '未知错误'));
+            return;
+        }
+        
+        // 更新本地数据(添加 attr_id 和 value_id)
+        attr.attr_id = result.attr_id;
+        attr.attr_name = attrName;
+        attr.values = result.values.map(v => ({
+            value_id: v.value_id,
+            value: v.value
+        }));
+        delete attr.isNew;
+        
+        console.log('属性确认成功:', attr);
+        
+        // 重新渲染
+        renderAttributes();
+        const addAttrButton = document.querySelector('.btn-add-attribute');
+        if (addAttrButton) {
+            addAttrButton.disabled = false;
+        }
+        
+        alert('属性添加成功！');
+        
+    } catch (error) {
+        console.error('保存属性失败:', error);
+        alert('保存属性失败: ' + error.message);
     }
+}
+
+// 实时更新新建属性的名称
+function updateAttributeName(index, value) {
+    currentAttributes[index].attr_name = value.trim();
+    // console.log('属性名称:', currentAttributes[index].attr_name);
+}
+
+// 实时更新新建属性的值
+function updateAttributeValues(index, value) {
+    const values = value.split(',')
+        .map(v => v.trim())
+        .filter(v => v);
+    
+    currentAttributes[index].values = values;
+    // console.log('属性值:', currentAttributes[index].values);
 }
 
 // 取消新建属性
@@ -414,7 +473,7 @@ function cancelNewAttribute(index) {
 }
 
 // 添加新的属性值
-function addNewAttributeValue(attrIndex) {
+async function addNewAttributeValue(attrIndex) {
     const input = document.getElementById(`new-value-${attrIndex}`);
     const newValue = input ? input.value.trim() : '';
     
@@ -437,71 +496,286 @@ function addNewAttributeValue(attrIndex) {
         return;
     }
     
-    // 添加新值
-    attr.values.push({ value: newValue });
-    input.value = '';
+    // 保存到数据库
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     
-    // 如果是新建属性,重新渲染带输入框的视图
-    if (attr.isNew) {
-        renderAttributesWithNewRow(attrIndex);
-    } else {
-        // 重新渲染
-        renderAttributes();
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/${attr.attr_id}/values`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ value: newValue })
+        });
         
-        // 如果已有SKU，提示需要重新生成
-        if (currentSKUs.length > 0) {
-            if (confirm('添加属性值后需要重新生成SKU组合，是否继续？')) {
-                generateSKUs();
+        const result = await response.json();
+        console.log('添加属性值结果:', result);
+        
+        if (result.success) {
+            // 添加到本地数据
+            attr.values.push({
+                value_id: result.value_id,
+                value: newValue
+            });
+            
+            input.value = '';
+            
+            // 重新渲染
+            renderAttributes();
+            
+            // 如果已有SKU，提示需要重新生成
+            if (currentSKUs.length > 0) {
+                if (confirm('添加属性值后需要重新生成SKU组合，是否继续？')) {
+                    generateSKUs();
+                }
             }
+        } else {
+            alert('添加失败: ' + (result.message || '未知错误'));
         }
+    } catch (error) {
+        console.error('添加属性值失败:', error);
+        alert('添加失败: ' + error.message);
     }
 }
 
 // 删除属性值
-function removeAttributeValue(attrIndex, valueIndex) {
+async function removeAttributeValue(attrIndex, valueIndex) {
     const attr = currentAttributes[attrIndex];
     const value = attr.values[valueIndex];
     const valueText = typeof value === 'string' ? value : (value.value || '');
+    const valueId = typeof value === 'string' ? null : (value.value_id || null);
     
     if (!confirm(`确定删除属性值"${valueText}"吗？`)) {
         return;
     }
     
-    // 删除该值
-    attr.values.splice(valueIndex, 1);
+    if (!valueId) {
+        alert('无法获取属性值ID');
+        return;
+    }
     
-    // 重新渲染
-    renderAttributes();
+    // 从数据库删除
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     
-    // 如果已有SKU，提示需要重新生成
-    if (currentSKUs.length > 0) {
-        if (confirm('删除属性值后需要重新生成SKU组合，是否继续？')) {
-            generateSKUs();
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/${attr.attr_id}/values/${valueId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // 删除本地数据
+            attr.values.splice(valueIndex, 1);
+            
+            // 重新渲染
+            renderAttributes();
+            
+            // 如果已有SKU，提示需要重新生成
+            if (currentSKUs.length > 0) {
+                if (confirm('删除属性值后需要重新生成SKU组合，是否继续？')) {
+                    generateSKUs();
+                }
+            }
+        } else {
+            alert('删除失败: ' + (result.message || '未知错误'));
         }
+    } catch (error) {
+        console.error('删除失败:', error);
+        alert('删除失败: ' + error.message);
     }
 }
 
-// 更新属性名称
-function updateAttributeName(index, name) {
-    currentAttributes[index].attr_name = name.trim();
-}
-
-// 更新属性值
-function updateAttributeValues(index, valuesStr) {
-    const values = valuesStr.split(',').map(v => v.trim()).filter(v => v);
-    currentAttributes[index].values = values;
+// 使属性名称可编辑
+function makeAttrNameEditable(attrIndex, element) {
+    const attr = currentAttributes[attrIndex];
+    const currentName = attr.attr_name;
     
-    // 如果修改了属性值，提示需要重新生成SKU
-    if (currentSKUs.length > 0) {
-        const regenerate = confirm('修改属性值后需要重新生成SKU组合，是否继续？');
-        if (regenerate) {
-            generateSKUs();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-edit-input';
+    input.value = currentName;
+    
+    const saveEdit = async () => {
+        const newName = input.value.trim();
+        
+        if (!newName) {
+            alert('属性名称不能为空');
+            input.focus();
+            return;
         }
-    }
+        
+        if (newName === currentName) {
+            renderAttributes();
+            return;
+        }
+        
+        // 检查重名
+        const exists = currentAttributes.some((a, i) => 
+            i !== attrIndex && a.attr_name === newName
+        );
+        
+        if (exists) {
+            alert('该属性名称已存在！');
+            input.focus();
+            return;
+        }
+        
+        // 保存到数据库
+        const spuId = document.getElementById('editSpuId').value;
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/${attr.attr_id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ attr_name: newName })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                attr.attr_name = newName;
+                renderAttributes();
+                
+                // 提示是否需要重新生成SKU
+                if (currentSKUs.length > 0) {
+                    if (confirm('修改属性名称后需要重新生成SKU组合,是否继续？')) {
+                        generateSKUs();
+                    }
+                }
+            } else {
+                alert('保存失败: ' + (result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('保存失败:', error);
+            alert('保存失败: ' + error.message);
+        }
+    };
+    
+    input.onblur = saveEdit;
+    input.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveEdit();
+        } else if (e.key === 'Escape') {
+            renderAttributes();
+        }
+    };
+    
+    element.innerHTML = '';
+    element.appendChild(input);
+    input.focus();
+    input.select();
 }
 
-// 添加属性
-function addAttribute(index) {
+// 使属性值可编辑
+function makeValueEditable(attrIndex, valueIndex, element) {
+    const attr = currentAttributes[attrIndex];
+    const value = attr.values[valueIndex];
+    const currentValue = typeof value === 'string' ? value : (value.value || '');
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'inline-edit-input';
+    input.value = currentValue;
+    
+    const saveEdit = async () => {
+        const newValue = input.value.trim();
+        
+        if (!newValue) {
+            alert('属性值不能为空');
+            input.focus();
+            return;
+        }
+        
+        if (newValue === currentValue) {
+            renderAttributes();
+            return;
+        }
+        
+        // 检查重复
+        const exists = attr.values.some((v, i) => {
+            if (i === valueIndex) return false;
+            const existingValue = typeof v === 'string' ? v : (v.value || '');
+            return existingValue === newValue;
+        });
+        
+        if (exists) {
+            alert('该属性值已存在！');
+            input.focus();
+            return;
+        }
+        
+        // 保存到数据库
+        const spuId = document.getElementById('editSpuId').value;
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+        const valueId = typeof value === 'string' ? null : (value.value_id || null);
+        
+        if (!valueId) {
+            alert('无法获取属性值ID');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/${attr.attr_id}/values/${valueId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ value: newValue })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                if (typeof attr.values[valueIndex] === 'string') {
+                    attr.values[valueIndex] = newValue;
+                } else {
+                    attr.values[valueIndex].value = newValue;
+                }
+                
+                renderAttributes();
+                
+                // 提示是否需要重新生成SKU
+                if (currentSKUs.length > 0) {
+                    if (confirm('修改属性值后需要重新生成SKU组合,是否继续？')) {
+                        generateSKUs();
+                    }
+                }
+            } else {
+                alert('保存失败: ' + (result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('保存失败:', error);
+            alert('保存失败: ' + error.message);
+        }
+    };
+    
+    input.onblur = saveEdit;
+    input.onkeypress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            saveEdit();
+        } else if (e.key === 'Escape') {
+            renderAttributes();
+        }
+    };
+    
+    element.innerHTML = '';
+    element.appendChild(input);
+    input.focus();
+    input.select();
 }
 
 // 生成SKU组合
@@ -648,8 +922,8 @@ function deleteSKU(index) {
     }
 }
 
-// 保存所有更改
-async function saveAllChanges() {
+// 保存spu更改
+async function saveSpuChanges() {
     const spuId = document.getElementById('editSpuId').value;
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     
@@ -665,20 +939,8 @@ async function saveAllChanges() {
         return;
     }
 
-    // 验证属性
-    const validAttrs = currentAttributes.filter(attr => attr.attr_name && attr.values.length > 0);
-    
-    // 验证SKU
-    for (const sku of currentSKUs) {
-        if (!sku.now_price || sku.now_price <= 0) {
-            alert('请填写所有SKU的现价');
-            return;
-        }
-    }
-
     try {
-        // 1. 更新SPU信息
-        const spuResponse = await fetch(`${API_BASE_URL}/products/${spuId}`, {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -687,27 +949,12 @@ async function saveAllChanges() {
             body: JSON.stringify(spuData)
         });
 
-        if (!spuResponse.ok) throw new Error('更新SPU失败');
-
-        // 2. 保存属性和SKU
-        const saveResponse = await fetch(`${API_BASE_URL}/products/${spuId}/complete`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                attributes: validAttrs,
-                skus: currentSKUs
-            })
-        });
-
-        const result = await saveResponse.json();
+        const result = await response.json();
+        console.log("保存SPU结果:", result);
         
         if (result.success) {
-            alert('保存成功');
-            closeEditModal();
-            loadProducts();
+            alert('基本信息保存成功');
+            loadProducts(); // 刷新商品列表
         } else {
             alert('保存失败: ' + (result.message || '未知错误'));
         }

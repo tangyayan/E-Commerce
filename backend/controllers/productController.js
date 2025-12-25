@@ -224,155 +224,51 @@ exports.getProductById = async (req, res) => {
 };
 
 /**
- * 获取商品的属性
+ * 更新SPU基本信息
  */
-exports.getProductAttributes = async (req, res) => {
-  try {
-    const { spu_id } = req.params;
-
-    const result = await pool.query(`
-      SELECT 
-        ak.attr_id,
-        ak.attr_name,
-        json_agg(json_build_object('value_id', av.value_id, 'value', av.value)) as values
-      FROM AttributeKey ak
-      LEFT JOIN AttributeValue av ON ak.attr_id = av.attr_id
-      WHERE ak.spu_id = $1
-      GROUP BY ak.attr_id, ak.attr_name
-    `, [spu_id]);
-
-    res.json({
-      success: true,
-      attributes: result.rows
-    });
-  } catch (error) {
-    console.error('获取属性失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
-  }
-};
-
-/**
- * 获取商品的所有SKU
- */
-exports.getProductSKUs = async (req, res) => {
-  try {
-    const { spu_id } = req.params;
-
-    const result = await pool.query(`
-      SELECT 
-        s.sku_id,
-        s.origin_price,
-        s.now_price,
-        s.barcode,
-        COALESCE(SUM(ws.stock), 0) as stock,
-        json_agg(json_build_object(
-          'attr_name', ak.attr_name,
-          'value', av.value
-        )) as attributes
-      FROM SKU s
-      LEFT JOIN SKUAttributeValue sav ON s.sku_id = sav.sku_id
-      LEFT JOIN AttributeValue av ON sav.value_id = av.value_id
-      LEFT JOIN AttributeKey ak ON av.attr_id = ak.attr_id
-      LEFT JOIN WarehouseStock ws ON s.sku_id = ws.sku_id
-      WHERE s.spu_id = $1
-      GROUP BY s.sku_id
-    `, [spu_id]);
-
-    res.json({
-      success: true,
-      skus: result.rows
-    });
-  } catch (error) {
-    console.error('获取SKU失败:', error);
-    res.status(500).json({ success: false, message: '服务器错误' });
-  }
-};
-
-/**
- * 完整更新商品（属性+SKU）
- */
-exports.updateProductComplete = async (req, res) => {
-  const client = await pool.connect();
+exports.updateProductSpu = async (req, res) => {
+    try {
+      const { spu_id } = req.params;
+      const { name, description, image_url } = req.body;
   
-  try {
-    const { spu_id } = req.params;
-    const { attributes, skus } = req.body;
-
-    await client.query('BEGIN');
-
-    // 1. 删除旧属性和SKU
-    await client.query('DELETE FROM AttributeKey WHERE spu_id = $1', [spu_id]);
-    await client.query('DELETE FROM SKU WHERE spu_id = $1', [spu_id]);
-
-    // 2. 插入新属性
-    const attrMap = {};
-    for (const attr of attributes) {
-      const attrResult = await client.query(
-        'INSERT INTO AttributeKey (attr_name, spu_id) VALUES ($1, $2) RETURNING attr_id',
-        [attr.attr_name, spu_id]
+      // 验证权限：检查商品是否属于该用户的店铺
+      const checkResult = await pool.query(
+        'SELECT s.shop_id FROM SPU s WHERE s.spu_id = $1',
+        [spu_id]
       );
-      const attrId = attrResult.rows[0].attr_id;
-      attrMap[attr.attr_name] = { attr_id: attrId, values: {} };
-
-      // 插入属性值
-      for (const value of attr.values) {
-        const valueResult = await client.query(
-          'INSERT INTO AttributeValue (attr_id, value) VALUES ($1, $2) RETURNING value_id',
-          [attrId, value]
-        );
-        attrMap[attr.attr_name].values[value] = valueResult.rows[0].value_id;
+  
+      if (checkResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: '商品不存在' });
       }
-    }
-
-    // 3. 插入SKU
-    for (const sku of skus) {
-      const skuResult = await client.query(
-        'INSERT INTO SKU (spu_id, origin_price, now_price, barcode) VALUES ($1, $2, $3, $4) RETURNING sku_id',
-        [spu_id, sku.origin_price, sku.now_price, sku.barcode]
+  
+      const productShopId = checkResult.rows[0].shop_id;
+      
+      // 获取用户的店铺ID
+      const userShopResult = await pool.query(
+        'SELECT shop_id FROM Shop WHERE account_id = $1',
+        [req.user.id]
       );
-      const skuId = skuResult.rows[0].sku_id;
-
-      // 关联属性值
-      for (let i = 0; i < sku.attributes.length; i++) {
-        const attrName = attributes[i].attr_name;
-        const attrValue = sku.attributes[i];
-        const valueId = attrMap[attrName].values[attrValue];
-
-        await client.query(
-          'INSERT INTO SKUAttributeValue (sku_id, value_id) VALUES ($1, $2)',
-          [skuId, valueId]
-        );
+  
+      if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+        return res.status(403).json({ success: false, message: '无权限修改此商品' });
       }
-
-      // 更新库存
-      if (sku.stock > 0) {
-        // 获取店铺的第一个仓库
-        const warehouseResult = await client.query(
-          'SELECT code FROM warehouse WHERE shop_id = (SELECT shop_id FROM SPU WHERE spu_id = $1) LIMIT 1',
-          [spu_id]
-        );
-        
-        if (warehouseResult.rows.length > 0) {
-          const warehouseCode = warehouseResult.rows[0].code;
-          await client.query(
-            'INSERT INTO WarehouseStock (code, sku_id, stock) VALUES ($1, $2, $3) ON CONFLICT (code, sku_id) DO UPDATE SET stock = $3',
-            [warehouseCode, skuId, sku.stock]
-          );
-        }
-      }
+  
+      // 更新SPU
+      const result = await pool.query(
+        'UPDATE SPU SET name = $1, description = $2, image_url = $3 WHERE spu_id = $4 RETURNING *',
+        [name, description, image_url, spu_id]
+      );
+  
+      res.json({
+        success: true,
+        message: '更新成功',
+        product: result.rows[0]
+      });
+    } catch (error) {
+      console.error('更新商品失败:', error);
+      res.status(500).json({ success: false, message: '服务器错误' });
     }
-
-    await client.query('COMMIT');
-
-    res.json({ success: true, message: '更新成功' });
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('更新商品失败:', error);
-    res.status(500).json({ success: false, message: '更新失败: ' + error.message });
-  } finally {
-    client.release();
-  }
-};
+  };
 
 /**
  * 创建新商品（需要登录且有店铺）
@@ -454,4 +350,275 @@ exports.createProduct = async (req, res) => {
             message: '创建商品失败'
         });
     }
+};
+
+/**
+ * 添加新属性(创建 AttributeKey 和 AttributeValue)
+ */
+exports.addProductAttribute = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { spu_id } = req.params;
+    const { attr_name, values } = req.body;
+
+    console.log('添加新属性:', { spu_id, attr_name, values });
+
+    // 验证权限
+    const checkResult = await client.query(
+      'SELECT shop_id FROM SPU WHERE spu_id = $1',
+      [spu_id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '商品不存在' });
+    }
+
+    const productShopId = checkResult.rows[0].shop_id;
+    
+    const userShopResult = await client.query(
+      'SELECT shop_id FROM Shop WHERE account_id = $1',
+      [req.user.id]
+    );
+
+    if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+      return res.status(403).json({ success: false, message: '无权限修改此商品' });
+    }
+
+    await client.query('BEGIN');
+
+    // 创建 AttributeKey
+    const attrResult = await client.query(
+      'INSERT INTO AttributeKey (attr_name, spu_id) VALUES ($1, $2) RETURNING attr_id',
+      [attr_name, spu_id]
+    );
+    const attrId = attrResult.rows[0].attr_id;
+
+    // 创建 AttributeValue
+    const createdValues = [];
+    for (const value of values) {
+      const valueText = typeof value === 'string' ? value : (value.value || value);
+      const valueResult = await client.query(
+        'INSERT INTO AttributeValue (attr_id, value) VALUES ($1, $2) RETURNING value_id, value',
+        [attrId, valueText]
+      );
+      createdValues.push(valueResult.rows[0]);
+    }
+
+    const firstvalue = createdValues.length > 0 ? createdValues[0].value_id : null;
+    if (firstvalue) {
+        const allskuResult = await client.query(
+            'SELECT sku_id FROM SKU WHERE spu_id = $1',
+            [spu_id]
+        );
+        for (const skuRow of allskuResult.rows) {
+            await client.query(
+                'INSERT INTO SKUAttributeValue (sku_id, value_id) VALUES ($1, $2)',
+                [skuRow.sku_id, firstvalue]
+            );
+        }
+    }
+
+    await client.query('COMMIT');
+
+    res.json({ 
+      success: true, 
+      message: '属性添加成功',
+      attr_id: attrId,
+      values: createdValues
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('添加属性失败:', error);
+    res.status(500).json({ success: false, message: '添加失败: ' + error.message });
+  } finally {
+    client.release();
+  }
+};
+
+/**
+ * 更新属性名称
+ */
+exports.updateAttributeName = async (req, res) => {
+  try {
+    const { spu_id, attr_id } = req.params;
+    const { attr_name } = req.body;
+
+    // 验证权限
+    const checkResult = await pool.query(
+      'SELECT shop_id FROM SPU WHERE spu_id = $1',
+      [spu_id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '商品不存在' });
+    }
+
+    const productShopId = checkResult.rows[0].shop_id;
+    
+    const userShopResult = await pool.query(
+      'SELECT shop_id FROM Shop WHERE account_id = $1',
+      [req.user.id]
+    );
+
+    if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+      return res.status(403).json({ success: false, message: '无权限修改此商品' });
+    }
+
+    // 更新属性名称
+    await pool.query(
+      'UPDATE AttributeKey SET attr_name = $1 WHERE attr_id = $2 AND spu_id = $3',
+      [attr_name, attr_id, spu_id]
+    );
+
+    res.json({ success: true, message: '属性名称更新成功' });
+  } catch (error) {
+    console.error('更新属性名称失败:', error);
+    res.status(500).json({ success: false, message: '更新失败: ' + error.message });
+  }
+};
+
+/**
+ * 添加单个属性值
+ */
+exports.addAttributeValue = async (req, res) => {
+  try {
+    const { spu_id, attr_id } = req.params;
+    const { value } = req.body;
+
+    // 验证权限
+    const checkResult = await pool.query(
+      'SELECT shop_id FROM SPU WHERE spu_id = $1',
+      [spu_id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '商品不存在' });
+    }
+
+    const productShopId = checkResult.rows[0].shop_id;
+    
+    const userShopResult = await pool.query(
+      'SELECT shop_id FROM Shop WHERE account_id = $1',
+      [req.user.id]
+    );
+
+    if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+      return res.status(403).json({ success: false, message: '无权限修改此商品' });
+    }
+
+    // 添加属性值
+    const result = await pool.query(
+      'INSERT INTO AttributeValue (attr_id, value) VALUES ($1, $2) RETURNING value_id, value',
+      [attr_id, value]
+    );
+
+    res.json({ 
+      success: true, 
+      message: '属性值添加成功',
+      value_id: result.rows[0].value_id,
+      value: result.rows[0].value
+    });
+  } catch (error) {
+    console.error('添加属性值失败:', error);
+    res.status(500).json({ success: false, message: '添加失败: ' + error.message });
+  }
+};
+
+/**
+ * 更新属性值
+ */
+exports.updateAttributeValue = async (req, res) => {
+  try {
+    const { spu_id, attr_id, value_id } = req.params;
+    const { value } = req.body;
+
+    // 验证权限
+    const checkResult = await pool.query(
+      'SELECT shop_id FROM SPU WHERE spu_id = $1',
+      [spu_id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '商品不存在' });
+    }
+
+    const productShopId = checkResult.rows[0].shop_id;
+    
+    const userShopResult = await pool.query(
+      'SELECT shop_id FROM Shop WHERE account_id = $1',
+      [req.user.id]
+    );
+
+    if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+      return res.status(403).json({ success: false, message: '无权限修改此商品' });
+    }
+
+    // 更新属性值
+    await pool.query(
+      'UPDATE AttributeValue SET value = $1 WHERE value_id = $2 AND attr_id = $3',
+      [value, value_id, attr_id]
+    );
+
+    res.json({ success: true, message: '属性值更新成功' });
+  } catch (error) {
+    console.error('更新属性值失败:', error);
+    res.status(500).json({ success: false, message: '更新失败: ' + error.message });
+  }
+};
+
+/**
+ * 删除属性值
+ */
+exports.deleteAttributeValue = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { spu_id, attr_id, value_id } = req.params;
+
+    // 验证权限
+    const checkResult = await client.query(
+      'SELECT shop_id FROM SPU WHERE spu_id = $1',
+      [spu_id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '商品不存在' });
+    }
+
+    const productShopId = checkResult.rows[0].shop_id;
+    
+    const userShopResult = await client.query(
+      'SELECT shop_id FROM Shop WHERE account_id = $1',
+      [req.user.id]
+    );
+
+    if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+      return res.status(403).json({ success: false, message: '无权限修改此商品' });
+    }
+
+    await client.query('BEGIN');
+
+    // 删除 SKUAttributeValue 中的关联
+    await client.query(
+      'DELETE FROM SKUAttributeValue WHERE value_id = $1',
+      [value_id]
+    );
+
+    // 删除属性值
+    await client.query(
+      'DELETE FROM AttributeValue WHERE value_id = $1 AND attr_id = $2',
+      [value_id, attr_id]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({ success: true, message: '属性值删除成功' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('删除属性值失败:', error);
+    res.status(500).json({ success: false, message: '删除失败: ' + error.message });
+  } finally {
+    client.release();
+  }
 };
