@@ -1,224 +1,191 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>店铺详情</title>
-    <style>
-        /* ===== 全局 ===== */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f4f6f8;
-            margin: 0;
-            padding: 30px 16px;
-            color: #333;
-        }
-
-        button {
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 14px;
-            font-size: 14px;
-        }
-
-        /* ===== 店铺信息卡片 ===== */
-        #shop-container {
-            background: #fff;
-            padding: 28px 32px;
-            border-radius: 14px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-            max-width: 900px;
-            margin: 0 auto 24px auto;
-            position: relative;
-        }
-
-        #shop-name {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-
-        #shop-desc {
-            margin: 10px 0 16px 0;
-            color: #666;
-            font-size: 15px;
-        }
-
-        .shop-meta {
-            font-size: 14px;
-            color: #888;
-        }
-
-        /* ===== 编辑按钮 ===== */
-        #edit-shop-btn {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            background-color: #1677ff;
-            color: #fff;
-        }
-
-        #edit-shop-btn:hover {
-            background-color: #0958d9;
-        }
-
-        /* ===== 编辑表单 ===== */
-        #edit-shop-form {
-            max-width: 900px;
-            margin: 0 auto 24px auto;
-            background: #fff;
-            padding: 24px 28px;
-            border-radius: 14px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-        }
-
-        #edit-shop-form label {
-            font-size: 14px;
-            color: #555;
-        }
-
-        #edit-shop-form input,
-        #edit-shop-form textarea {
-            width: 100%;
-            margin-top: 6px;
-            margin-bottom: 14px;
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-
-        .form-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        #save-shop-btn {
-            background-color: #1677ff;
-            color: #fff;
-        }
-
-        #save-shop-btn:hover {
-            background-color: #0958d9;
-        }
-
-        #cancel-shop-btn {
-            background-color: #f0f0f0;
-            color: #333;
-        }
-
-        #cancel-shop-btn:hover {
-            background-color: #d9d9d9;
-        }
-
-        /* ===== 分隔线 ===== */
-        hr {
-            border: none;
-            border-top: 1px solid #e5e7eb;
-            max-width: 900px;
-            margin: 36px auto;
-        }
-
-        /* ===== 商品列表 ===== */
-        #product-list {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        #product-list h2 {
-            margin-bottom: 20px;
-            font-size: 22px;
-        }
-
-        #products {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .product-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 14px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        .product-card img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .product-card h3 {
-            margin: 0;
-            font-size: 16px;
-        }
-
-        .product-card p {
-            margin: 6px 0 0 0;
-            font-size: 13px;
-            color: #666;
-        }
-
-        /* ===== 响应式 ===== */
-        @media (max-width: 600px) {
-            #edit-shop-btn {
-                position: static;
-                margin-top: 12px;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>SHOP | E-COMMERCE WEBSITE</title>
+    
+    <!-- favicon -->
+    <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16"> 
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/shop.css">
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/b921c4663e.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
 </head>
-
 <body>
+    <!-- HEADER -->
+    <div id="1"></div>
+    <script>
+        load("header.html");
+        function load(url)
+        {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(1).innerHTML = req.responseText;
+        }
+    </script>
+    <script src="header.js"></script>
 
-    <!-- 店铺信息 -->
-    <div id="shop-container">
-        <h1 id="shop-name">加载中...</h1>
-        <p id="shop-desc"></p>
-        <div class="shop-meta">
-            店主：<span id="shop-owner"></span> ｜ 商品数量：<span id="product-count"></span>
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <!-- 店铺信息 -->
+        <div id="shop-container">
+            <h1 id="shop-name">加载中...</h1>
+            <p id="shop-desc"></p>
+            <div class="shop-meta">
+                店主：<span id="shop-owner"></span> ｜ 商品数量：<span id="product-count"></span>
+            </div>
+
+            <button id="edit-shop-btn">编辑店铺</button>
         </div>
 
-        <button id="edit-shop-btn">编辑店铺</button>
+        <!-- 编辑表单 -->
+        <form id="edit-shop-form" style="display:none;">
+            <div>
+                <label>店铺名称</label>
+                <input type="text" id="edit-shop-name" />
+            </div>
+
+            <div>
+                <label>店铺简介</label>
+                <textarea id="edit-shop-desc" rows="4"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="save-shop-btn">保存</button>
+                <button type="button" id="cancel-shop-btn">取消</button>
+            </div>
+        </form>
+
+        <hr>
+
+        <!-- 商品列表 -->
+        <div id="product-list">
+            <div class="product-header">
+                <h2>商品列表</h2>
+                <button id="add-product-btn" class="btn-primary" style="display:none;">
+                    <i class="fas fa-plus"></i> 添加商品
+                </button>
+            </div>
+            
+            <!-- 表格视图 -->
+            <div class="table-container">
+                <table id="products-table">
+                    <thead>
+                        <tr>
+                            <th>商品图片</th>
+                            <th>商品名称</th>
+                            <th>描述</th>
+                            <th class="actions-column">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-tbody">
+                        <tr>
+                            <td colspan="6" class="loading">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- 编辑表单 -->
-    <form id="edit-shop-form" style="display:none;">
-        <div>
-            <label>店铺名称</label>
-            <input type="text" id="edit-shop-name" />
+    <!-- 编辑商品模态框 -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="modalTitle">编辑商品</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            
+            <!-- SPU信息编辑 -->
+            <div class="modal-body">
+                <section class="spu-section">
+                    <h4>基本信息</h4>
+                    <form id="editProductForm">
+                        <input type="hidden" id="editSpuId" value="">
+
+                        <div class="form-group">
+                            <label for="productName">商品名称 <span class="required">*</span></label>
+                            <input type="text" id="productName" required placeholder="请输入商品名称">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productDesc">商品描述</label>
+                            <textarea id="productDesc" rows="4" placeholder="请输入商品描述"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="productImage">商品图片URL</label>
+                            <input type="url" id="productImage" placeholder="https://example.com/image.jpg">
+                        </div>
+                    </form>
+                </section>
+
+                <hr>
+
+                <!-- 属性管理 -->
+                <section class="attributes-section">
+                    <div class="section-header">
+                        <h4>商品属性</h4>
+                    </div>
+                    <div id="attributesContainer"></div>
+                </section>
+
+                <hr>
+
+                <!-- SKU列表 -->
+                <section class="sku-section">
+                    <div class="section-header">
+                        <h4>SKU列表</h4>
+                        <button type="button" class="btn-generate-sku" onclick="generateSKUs()">
+                            <i class="fas fa-magic"></i> 生成SKU组合
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table id="sku-table">
+                            <thead>
+                                <tr>
+                                    <th>SKU ID</th>
+                                    <th id="sku-attr-headers"></th>
+                                    <th>原价</th>
+                                    <th>现价</th>
+                                    <th>库存</th>
+                                    <th>条形码</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sku-tbody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="button" class="btn-primary" onclick="saveAllChanges()">保存所有更改</button>
+                </div>
+            </div>
         </div>
-
-        <div>
-            <label>店铺简介</label>
-            <textarea id="edit-shop-desc" rows="4"></textarea>
-        </div>
-
-        <div class="form-actions">
-            <button type="button" id="save-shop-btn">保存</button>
-            <button type="button" id="cancel-shop-btn">取消</button>
-        </div>
-    </form>
-
-    <hr>
-
-    <!-- 商品列表 -->
-    <div id="product-list">
-        <h2>商品列表</h2>
-        <div id="products"></div>
     </div>
 
+    <!-- FOOTER -->
+    <div id="footerContainer"></div>
+    <script>
+        (function() {
+            var req = new XMLHttpRequest();
+            req.open("GET", "footer.html", true);
+            req.onload = function() {
+                if (req.status === 200) {
+                    document.getElementById('footerContainer').innerHTML = req.responseText;
+                }
+            };
+            req.send();
+        })();
+    </script>
     <script src="shop.js"></script>
 </body>
-
 </html>

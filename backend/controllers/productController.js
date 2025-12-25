@@ -57,6 +57,57 @@ exports.getAllProducts = async (req, res) => {
 };
 
 /**
+ * 获取商品列表（支持按店铺筛选）
+ */
+exports.getProducts = async (req, res) => {
+  try {
+    const { shop_id, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT
+        s.spu_id,
+        s.name,
+        s.description,
+        s.image_url,
+        s.shop_id,
+        sh.shop_name
+      FROM spu s
+      LEFT JOIN shop sh ON s.shop_id = sh.shop_id
+    `;
+
+    const params = [];
+    if (shop_id) {
+      query += ` WHERE s.shop_id = $1`;
+      params.push(shop_id);
+    }
+
+    query += `
+      ORDER BY s.spu_id DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
+
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      products: result.rows,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    });
+
+  } catch (error) {
+    console.error('获取商品列表错误:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误'
+    });
+  }
+};
+
+/**
  * 根据SPU获取所有SKU及其详情
  */
 exports.getProductById = async (req, res) => {
@@ -170,6 +221,157 @@ exports.getProductById = async (req, res) => {
             message: '服务器错误'
         });
     }
+};
+
+/**
+ * 获取商品的属性
+ */
+exports.getProductAttributes = async (req, res) => {
+  try {
+    const { spu_id } = req.params;
+
+    const result = await pool.query(`
+      SELECT 
+        ak.attr_id,
+        ak.attr_name,
+        json_agg(json_build_object('value_id', av.value_id, 'value', av.value)) as values
+      FROM AttributeKey ak
+      LEFT JOIN AttributeValue av ON ak.attr_id = av.attr_id
+      WHERE ak.spu_id = $1
+      GROUP BY ak.attr_id, ak.attr_name
+    `, [spu_id]);
+
+    res.json({
+      success: true,
+      attributes: result.rows
+    });
+  } catch (error) {
+    console.error('获取属性失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+};
+
+/**
+ * 获取商品的所有SKU
+ */
+exports.getProductSKUs = async (req, res) => {
+  try {
+    const { spu_id } = req.params;
+
+    const result = await pool.query(`
+      SELECT 
+        s.sku_id,
+        s.origin_price,
+        s.now_price,
+        s.barcode,
+        COALESCE(SUM(ws.stock), 0) as stock,
+        json_agg(json_build_object(
+          'attr_name', ak.attr_name,
+          'value', av.value
+        )) as attributes
+      FROM SKU s
+      LEFT JOIN SKUAttributeValue sav ON s.sku_id = sav.sku_id
+      LEFT JOIN AttributeValue av ON sav.value_id = av.value_id
+      LEFT JOIN AttributeKey ak ON av.attr_id = ak.attr_id
+      LEFT JOIN WarehouseStock ws ON s.sku_id = ws.sku_id
+      WHERE s.spu_id = $1
+      GROUP BY s.sku_id
+    `, [spu_id]);
+
+    res.json({
+      success: true,
+      skus: result.rows
+    });
+  } catch (error) {
+    console.error('获取SKU失败:', error);
+    res.status(500).json({ success: false, message: '服务器错误' });
+  }
+};
+
+/**
+ * 完整更新商品（属性+SKU）
+ */
+exports.updateProductComplete = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { spu_id } = req.params;
+    const { attributes, skus } = req.body;
+
+    await client.query('BEGIN');
+
+    // 1. 删除旧属性和SKU
+    await client.query('DELETE FROM AttributeKey WHERE spu_id = $1', [spu_id]);
+    await client.query('DELETE FROM SKU WHERE spu_id = $1', [spu_id]);
+
+    // 2. 插入新属性
+    const attrMap = {};
+    for (const attr of attributes) {
+      const attrResult = await client.query(
+        'INSERT INTO AttributeKey (attr_name, spu_id) VALUES ($1, $2) RETURNING attr_id',
+        [attr.attr_name, spu_id]
+      );
+      const attrId = attrResult.rows[0].attr_id;
+      attrMap[attr.attr_name] = { attr_id: attrId, values: {} };
+
+      // 插入属性值
+      for (const value of attr.values) {
+        const valueResult = await client.query(
+          'INSERT INTO AttributeValue (attr_id, value) VALUES ($1, $2) RETURNING value_id',
+          [attrId, value]
+        );
+        attrMap[attr.attr_name].values[value] = valueResult.rows[0].value_id;
+      }
+    }
+
+    // 3. 插入SKU
+    for (const sku of skus) {
+      const skuResult = await client.query(
+        'INSERT INTO SKU (spu_id, origin_price, now_price, barcode) VALUES ($1, $2, $3, $4) RETURNING sku_id',
+        [spu_id, sku.origin_price, sku.now_price, sku.barcode]
+      );
+      const skuId = skuResult.rows[0].sku_id;
+
+      // 关联属性值
+      for (let i = 0; i < sku.attributes.length; i++) {
+        const attrName = attributes[i].attr_name;
+        const attrValue = sku.attributes[i];
+        const valueId = attrMap[attrName].values[attrValue];
+
+        await client.query(
+          'INSERT INTO SKUAttributeValue (sku_id, value_id) VALUES ($1, $2)',
+          [skuId, valueId]
+        );
+      }
+
+      // 更新库存
+      if (sku.stock > 0) {
+        // 获取店铺的第一个仓库
+        const warehouseResult = await client.query(
+          'SELECT code FROM warehouse WHERE shop_id = (SELECT shop_id FROM SPU WHERE spu_id = $1) LIMIT 1',
+          [spu_id]
+        );
+        
+        if (warehouseResult.rows.length > 0) {
+          const warehouseCode = warehouseResult.rows[0].code;
+          await client.query(
+            'INSERT INTO WarehouseStock (code, sku_id, stock) VALUES ($1, $2, $3) ON CONFLICT (code, sku_id) DO UPDATE SET stock = $3',
+            [warehouseCode, skuId, sku.stock]
+          );
+        }
+      }
+    }
+
+    await client.query('COMMIT');
+
+    res.json({ success: true, message: '更新成功' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('更新商品失败:', error);
+    res.status(500).json({ success: false, message: '更新失败: ' + error.message });
+  } finally {
+    client.release();
+  }
 };
 
 /**

@@ -87,7 +87,7 @@ function renderUserPage(user, shop, addresses) {
                 <div class="shop-section">
                     <h2>我的店铺</h2>
                     <div class="shop-info">
-                        <div class="shop-card">
+                        <div class="shop-card clickable-card" onclick="viewShop(${shop.shop_id})">
                             <div class="shop-header">
                                 <h3>${shop.shop_name}</h3>
                                 <span class="shop-status active">营业中</span>
@@ -96,14 +96,6 @@ function renderUserPage(user, shop, addresses) {
                                 <p><strong>店铺ID:</strong> ${shop.shop_id}</p>
                                 <p><strong>创建时间:</strong> ${new Date(shop.created_at).toLocaleDateString()}</p>
                                 <p><strong>描述:</strong> ${shop.shop_description || '暂无描述'}</p>
-                            </div>
-                            <div class="shop-actions">
-                                <button class="btn-primary" onclick="manageShop(${shop.shop_id})">
-                                    <i class="fas fa-cog"></i> 管理店铺
-                                </button>
-                                <button class="btn-secondary" onclick="viewShop(${shop.shop_id})">
-                                    <i class="fas fa-eye"></i> 查看店铺
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -425,13 +417,6 @@ async function deleteAddress(addressId, recipientName) {
         console.error('删除地址失败:', error);
         alert('网络错误，请重试');
     }
-}
-
-/**
- * 管理店铺
- */
-function manageShop(shopId) {
-    window.location.href = `shop.html?id=${shopId}&action=manage`;
 }
 
 /**

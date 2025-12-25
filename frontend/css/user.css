@@ -146,6 +146,42 @@ body {
     margin-bottom: 30px;
 }
 
+/* 可点击的店铺卡片 */
+.clickable-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clickable-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+
+.clickable-card:active {
+    transform: translateY(-2px);
+}
+
+/* 移除按钮样式 */
+.shop-card .shop-actions {
+    display: none;
+}
+
+/* 添加点击提示 */
+.clickable-card::after {
+    content: '点击查看店铺详情 →';
+    display: block;
+    text-align: center;
+    color: #1677ff;
+    font-size: 14px;
+    margin-top: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.clickable-card:hover::after {
+    opacity: 1;
+}
+
 /* 按钮样式 */
 .btn-primary, .btn-secondary {
     padding: 12px 24px;

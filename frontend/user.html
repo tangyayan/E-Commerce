@@ -19,23 +19,19 @@
 </head>
 <body>
     <!-- HEADER -->
-    <div id="headerContainer"></div>
+    <!-- HEADER -->
+    <div id="1"></div>
     <script>
-        (function() {
-            var req = new XMLHttpRequest();
-            req.open("GET", "header.html", true);
-            req.onload = function() {
-                if (req.status === 200) {
-                    document.getElementById('headerContainer').innerHTML = req.responseText;
-                    
-                    var script = document.createElement('script');
-                    script.src = 'header.js';
-                    document.head.appendChild(script);
-                }
-            };
-            req.send();
-        })();
+        load("header.html");
+        function load(url)
+        {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(1).innerHTML = req.responseText;
+        }
     </script>
+    <script src="header.js"></script>
 
     <!-- USER CONTENT -->
     <div id="userContainer">

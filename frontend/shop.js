@@ -8,6 +8,8 @@ if (!shopId) {
     throw new Error('No shop id');
 }
 
+let isOwner = false; // 是否是店主
+
 // 请求店铺详情（公开接口）
 fetch(`${API_BASE_URL}/shop/${shopId}`)
     .then(res => res.json())
@@ -24,11 +26,528 @@ fetch(`${API_BASE_URL}/shop/${shopId}`)
         document.getElementById('shop-desc').innerText = shop.shop_description || '暂无描述';
         document.getElementById('shop-owner').innerText = shop.owner_name;
         document.getElementById('product-count').innerText = shop.product_count;
+
+        // 检查是否是店主
+        checkOwnership();
     })
     .catch(err => {
         console.error(err);
         alert('服务器错误');
     });
+
+// 检查当前用户是否是店主
+async function checkOwnership() {
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    if (!token) {
+        document.getElementById('edit-shop-btn').style.display = 'none';
+        isOwner = false;
+        loadProducts();
+        return;
+    }
+
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || sessionStorage.getItem('userInfo'));
+        const response = await fetch(`${API_BASE_URL}/shop/user/${userInfo.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (data.success && data.shop && data.shop.shop_id == shopId) {
+            isOwner = true;
+        } else {
+            document.getElementById('edit-shop-btn').style.display = 'none';
+            isOwner = false;
+        }
+    } catch (error) {
+        console.error('检查权限失败:', error);
+        document.getElementById('edit-shop-btn').style.display = 'none';
+        isOwner = false;
+    }
+
+    loadProducts();
+}
+
+// 加载店铺商品
+async function loadProducts() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/products?shop_id=${shopId}`);
+        const data = await response.json();
+
+        if (data.success && data.products) {
+            renderProducts(data.products);
+        } else {
+            document.getElementById('products').innerHTML = '<p class="no-products">暂无商品</p>';
+        }
+    } catch (error) {
+        console.error('加载商品失败:', error);
+        document.getElementById('products').innerHTML = '<p class="error">加载商品失败</p>';
+    }
+}
+
+// 渲染商品列表为表格
+function renderProducts(products) {
+    const tbody = document.getElementById('products-tbody');
+    const addBtn = document.getElementById('add-product-btn');
+    const actionsColumn = document.querySelector('.actions-column');
+    
+    tbody.innerHTML = '';
+
+    // 根据是否是店主显示操作列和添加按钮
+    if (isOwner) {
+        addBtn.style.display = 'inline-flex';
+        actionsColumn.style.display = 'table-cell';
+    } else {
+        addBtn.style.display = 'none';
+        actionsColumn.style.display = 'none';
+    }
+
+    if (!products || products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="no-products">暂无商品</td></tr>';
+        return;
+    }
+
+    products.forEach(product => {
+        const tr = document.createElement('tr');
+        tr.className = isOwner ? '' : 'clickable-row';
+        
+        tr.innerHTML = `
+            <td class="img-cell">
+                <img src="${product.image_url || 'img/default-product.jpg'}" alt="${product.name}">
+            </td>
+            <td class="name-cell">${product.name}</td>
+            <td class="desc-cell">${product.description || '暂无描述'}</td>
+            <td class="actions-cell">
+                ${isOwner ? `
+                    <button class="btn-edit-small" onclick="event.stopPropagation(); editProduct(${product.spu_id}, '${escapeHtml(product.name)}', '${escapeHtml(product.description || '')}', ${product.now_price || 0}, ${product.total_stock || 0}, '${product.image_url || ''}')">
+                        <i class="fas fa-edit"></i> 编辑
+                    </button>
+                    <button class="btn-delete-small" onclick="event.stopPropagation(); deleteProduct(${product.spu_id})">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                ` : ''}
+            </td>
+        `;
+
+        // 非店主点击整行跳转
+        if (!isOwner) {
+            tr.onclick = () => {
+                window.location.href = `contentDetails.html?id=${product.spu_id}`;
+            };
+        }
+
+        tbody.appendChild(tr);
+    });
+}
+
+// HTML转义函数
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+let currentAttributes = []; // 当前编辑的属性
+let currentSKUs = []; // 当前编辑的SKU
+
+// 编辑商品
+async function editProduct(spuId, name, desc, price, stock, imageUrl) {
+    document.getElementById('editSpuId').value = spuId;
+    document.getElementById('productName').value = name;
+    document.getElementById('productDesc').value = desc;
+    document.getElementById('productImage').value = imageUrl;
+    document.getElementById('modalTitle').textContent = '编辑商品';
+    
+    // 加载属性和SKU数据
+    await loadAttributesAndSKUs(spuId);
+    
+    document.getElementById('editProductModal').style.display = 'block';
+}
+
+// 加载属性和SKU数据
+async function loadAttributesAndSKUs(spuId) {
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    try {
+        // 加载属性
+        const Response = await fetch(`${API_BASE_URL}/products/${spuId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const Data = await Response.json();
+        console.log("获取属性结果:", Data);
+
+        if (!Data.success) {
+            throw new Error('获取商品详情失败');
+        }
+
+        currentAttributes = Data.product.attributes || [];
+        currentSKUs = Data.product.skus || [];
+        
+        renderAttributes();
+        renderSKUs();
+    } catch (error) {
+        console.error('加载数据失败:', error);
+        alert('加载数据失败');
+    }
+}
+
+// 渲染属性列表
+function renderAttributes() {
+    const container = document.getElementById('attributesContainer');
+    container.innerHTML = '';
+
+    if (currentAttributes.length === 0) {
+        container.innerHTML = '<p class="no-data">暂无属性，点击"添加属性"开始配置</p>';
+        return;
+    }
+
+    currentAttributes.forEach((attr, index) => {
+        const attrDiv = document.createElement('div');
+        attrDiv.className = 'attribute-row';
+        attrDiv.innerHTML = `
+            <div class="attr-name-group">
+                <label>属性名称</label>
+                <input type="text" class="attr-name-input" value="${attr.attr_name}" 
+                       onchange="updateAttributeName(${index}, this.value)">
+            </div>
+            <div class="attr-values-group">
+                <label>属性值 <span class="hint">(多个值用逗号分隔)</span></label>
+                <input type="text" class="attr-values-input" 
+                       value="${attr.values ? attr.values.join(',') : ''}"
+                       onchange="updateAttributeValues(${index}, this.value)"
+                       placeholder="例如: 红色,蓝色,黑色">
+            </div>
+            <button type="button" class="btn-add-attr" onclick="addAttribute(${index})">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        `;
+        container.appendChild(attrDiv);
+    });
+}
+
+// 更新属性名称
+function updateAttributeName(index, name) {
+    currentAttributes[index].attr_name = name.trim();
+}
+
+// 更新属性值
+function updateAttributeValues(index, valuesStr) {
+    const values = valuesStr.split(',').map(v => v.trim()).filter(v => v);
+    currentAttributes[index].values = values;
+    
+    // 如果修改了属性值，提示需要重新生成SKU
+    if (currentSKUs.length > 0) {
+        const regenerate = confirm('修改属性值后需要重新生成SKU组合，是否继续？');
+        if (regenerate) {
+            generateSKUs();
+        }
+    }
+}
+
+// 添加属性
+function addAttribute(index) {
+}
+
+// 生成SKU组合
+function generateSKUs() {
+    // 过滤有效属性
+    const validAttrs = currentAttributes.filter(attr => 
+        attr.attr_name && attr.values && attr.values.length > 0
+    );
+
+    if (validAttrs.length === 0) {
+        alert('请先添加至少一个属性');
+        return;
+    }
+
+    // 生成笛卡尔积
+    const combinations = cartesianProduct(validAttrs.map(attr => attr.values));
+    
+    // 创建SKU
+    currentSKUs = combinations.map((combo, index) => {
+        // 检查是否已存在相同组合的SKU
+        const existing = currentSKUs.find(sku => {
+            if (!sku.attributes) return false;
+            return JSON.stringify(sku.attributes) === JSON.stringify(combo);
+        });
+
+        if (existing) {
+            return existing;
+        }
+
+        // 创建新SKU
+        return {
+            sku_id: null, // 新SKU
+            attributes: combo,
+            origin_price: 0,
+            now_price: 0,
+            stock: 0,
+            barcode: ''
+        };
+    });
+
+    renderSKUs();
+}
+
+// 笛卡尔积函数
+function cartesianProduct(arrays) {
+    if (arrays.length === 0) return [[]];
+    if (arrays.length === 1) return arrays[0].map(v => [v]);
+    
+    const result = [];
+    const rest = cartesianProduct(arrays.slice(1));
+    
+    arrays[0].forEach(value => {
+        rest.forEach(combination => {
+            result.push([value, ...combination]);
+        });
+    });
+    
+    return result;
+}
+
+// 渲染SKU表格
+function renderSKUs() {
+    const tbody = document.getElementById('sku-tbody');
+    const attrHeaders = document.getElementById('sku-attr-headers');
+    
+    tbody.innerHTML = '';
+    attrHeaders.innerHTML = '';
+
+    // 渲染属性列头
+    currentAttributes.forEach(attr => {
+        const th = document.createElement('th');
+        th.textContent = attr.attr_name;
+        attrHeaders.appendChild(th);
+    });
+
+    if (currentSKUs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="20" class="no-data">暂无SKU，点击"生成SKU组合"创建</td></tr>';
+        return;
+    }
+
+    currentSKUs.forEach((sku, index) => {
+        const tr = document.createElement('tr');
+        
+        // SKU ID
+        let cells = `<td>${sku.sku_id || '新增'}</td>`;
+        
+        // 属性值
+        if (sku.attributes) {
+            sku.attributes.forEach(attrValue => {
+                cells += `<td>${attrValue}</td>`;
+            });
+        }
+        
+        // 价格和库存
+        cells += `
+            <td>
+                <input type="number" class="sku-input" step="0.01" min="0"
+                       value="${sku.origin_price || ''}" 
+                       onchange="updateSKUField(${index}, 'origin_price', this.value)">
+            </td>
+            <td>
+                <input type="number" class="sku-input" step="0.01" min="0"
+                       value="${sku.now_price || ''}" 
+                       onchange="updateSKUField(${index}, 'now_price', this.value)">
+            </td>
+            <td>
+                <input type="number" class="sku-input" min="0"
+                       value="${sku.stock || ''}" 
+                       onchange="updateSKUField(${index}, 'stock', this.value)">
+            </td>
+            <td>
+                <input type="text" class="sku-input"
+                       value="${sku.barcode || ''}" 
+                       onchange="updateSKUField(${index}, 'barcode', this.value)">
+            </td>
+            <td>
+                <button type="button" class="btn-delete-small" onclick="deleteSKU(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tr.innerHTML = cells;
+        tbody.appendChild(tr);
+    });
+}
+
+// 更新SKU字段
+function updateSKUField(index, field, value) {
+    if (field === 'origin_price' || field === 'now_price') {
+        currentSKUs[index][field] = parseFloat(value) || 0;
+    } else if (field === 'stock') {
+        currentSKUs[index][field] = parseInt(value) || 0;
+    } else {
+        currentSKUs[index][field] = value;
+    }
+}
+
+// 删除SKU
+function deleteSKU(index) {
+    if (confirm('确定删除此SKU吗？')) {
+        currentSKUs.splice(index, 1);
+        renderSKUs();
+    }
+}
+
+// 保存所有更改
+async function saveAllChanges() {
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    // 验证数据
+    const spuData = {
+        name: document.getElementById('productName').value.trim(),
+        description: document.getElementById('productDesc').value.trim(),
+        image_url: document.getElementById('productImage').value.trim()
+    };
+
+    if (!spuData.name) {
+        alert('商品名称不能为空');
+        return;
+    }
+
+    // 验证属性
+    const validAttrs = currentAttributes.filter(attr => attr.attr_name && attr.values.length > 0);
+    
+    // 验证SKU
+    for (const sku of currentSKUs) {
+        if (!sku.now_price || sku.now_price <= 0) {
+            alert('请填写所有SKU的现价');
+            return;
+        }
+    }
+
+    try {
+        // 1. 更新SPU信息
+        const spuResponse = await fetch(`${API_BASE_URL}/products/${spuId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(spuData)
+        });
+
+        if (!spuResponse.ok) throw new Error('更新SPU失败');
+
+        // 2. 保存属性和SKU
+        const saveResponse = await fetch(`${API_BASE_URL}/products/${spuId}/complete`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                attributes: validAttrs,
+                skus: currentSKUs
+            })
+        });
+
+        const result = await saveResponse.json();
+        
+        if (result.success) {
+            alert('保存成功');
+            closeEditModal();
+            loadProducts();
+        } else {
+            alert('保存失败: ' + (result.message || '未知错误'));
+        }
+    } catch (error) {
+        console.error('保存失败:', error);
+        alert('保存失败: ' + error.message);
+    }
+}
+
+// 关闭编辑模态框
+function closeEditModal() {
+    document.getElementById('editProductModal').style.display = 'none';
+    document.getElementById('editProductForm').reset();
+}
+
+// 保存商品
+async function saveProduct(event) {
+    event.preventDefault();
+    
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    const payload = {
+        name: document.getElementById('productName').value.trim(),
+        description: document.getElementById('productDesc').value.trim(),
+        now_price: parseFloat(document.getElementById('productPrice').value),
+        stock: parseInt(document.getElementById('productStock').value),
+        image_url: document.getElementById('productImage').value.trim()
+    };
+
+    if (!payload.name) {
+        alert('商品名称不能为空');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert('保存成功');
+            closeEditModal();
+            loadProducts();
+        } else {
+            alert('保存失败: ' + (data.message || '未知错误'));
+        }
+    } catch (error) {
+        console.error('保存商品失败:', error);
+        alert('保存失败');
+    }
+}
+
+// 删除商品
+async function deleteProduct(spuId) {
+    if (!confirm('确定要删除这个商品吗？')) return;
+
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert('删除成功');
+            loadProducts();
+        } else {
+            alert('删除失败: ' + (data.message || '未知错误'));
+        }
+    } catch (error) {
+        console.error('删除商品失败:', error);
+        alert('删除失败');
+    }
+}
+
+// 显示添加商品模态框
+function showAddProductModal() {
+    document.getElementById('editSpuId').value = '';
+    document.getElementById('editProductForm').reset();
+    document.getElementById('modalTitle').textContent = '添加商品';
+    document.getElementById('editProductModal').style.display = 'block';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const modal = document.getElementById('editProductModal');
+    if (event.target === modal) {
+        closeEditModal();
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     const editBtn = document.getElementById('edit-shop-btn');
@@ -38,7 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (editBtn && form) {
         editBtn.addEventListener('click', () => {
-            // 填充当前显示的店铺信息到表单
             const curName = document.getElementById('shop-name')?.textContent || '';
             const curDesc = document.getElementById('shop-desc')?.textContent || '';
             document.getElementById('edit-shop-name').value = curName;
@@ -67,7 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 获取 JWT token
             const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
             if (!token) {
                 alert('请先登录');
@@ -101,5 +618,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('保存失败:', e);
             }
         });
+    }
+
+    // 添加商品按钮
+    const addProductBtn = document.getElementById('add-product-btn');
+    if (addProductBtn) {
+        addProductBtn.addEventListener('click', showAddProductModal);
     }
 });
