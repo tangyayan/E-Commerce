@@ -599,12 +599,6 @@ exports.deleteAttributeValue = async (req, res) => {
 
     await client.query('BEGIN');
 
-    // 删除 SKUAttributeValue 中的关联
-    await client.query(
-      'DELETE FROM SKUAttributeValue WHERE value_id = $1',
-      [value_id]
-    );
-
     // 删除属性值
     await client.query(
       'DELETE FROM AttributeValue WHERE value_id = $1 AND attr_id = $2',

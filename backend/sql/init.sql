@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS SKUAttributeValue (
     FOREIGN KEY (sku_id) REFERENCES SKU(sku_id) ON DELETE CASCADE,
     FOREIGN KEY (value_id) REFERENCES AttributeValue(value_id) ON DELETE CASCADE
 );
+-- 确保同一 SKU 不会有重复的属性值，且属性值必须属于该 SKU 所属 SPU 的属性
 CREATE OR REPLACE FUNCTION check_sku_attributes_before()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -120,6 +121,26 @@ CREATE TRIGGER trg_check_sku_attributes_before
 BEFORE INSERT ON SKUAttributeValue
 FOR EACH ROW
 EXECUTE PROCEDURE check_sku_attributes_before();
+-- 删除attributeKey处理，防止删除仍在使用的属性值
+CREATE OR REPLACE FUNCTION check_attributevalue_in_use()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- 检查该属性值是否被任何 SKU 使用
+    IF EXISTS (
+        SELECT 1
+        FROM SKUAttributeValue
+        WHERE value_id = OLD.value_id
+    ) THEN
+        RAISE EXCEPTION '无法删除属性值 ID %: 该属性值正在被 SKU 使用', OLD.value_id;
+    END IF;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_check_attributevalue_in_use
+BEFORE DELETE ON AttributeValue
+FOR EACH ROW
+EXECUTE PROCEDURE check_attributevalue_in_use();
 
 --仓库信息
 CREATE TABLE IF NOT EXISTS warehouse (--一般先有shop再有warehouse
