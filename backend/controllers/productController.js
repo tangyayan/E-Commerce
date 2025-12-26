@@ -177,13 +177,13 @@ exports.getProductById = async (req, res) => {
  */
 exports.updateProductSpu = async (req, res) => {
     try {
-      const { spu_id } = req.params;
+      const { id } = req.params;
       const { name, description, image_url } = req.body;
   
       // 验证权限：检查商品是否属于该用户的店铺
       const checkResult = await pool.query(
         'SELECT s.shop_id FROM SPU s WHERE s.spu_id = $1',
-        [spu_id]
+        [id]
       );
   
       if (checkResult.rows.length === 0) {
@@ -205,7 +205,7 @@ exports.updateProductSpu = async (req, res) => {
       // 更新SPU
       const result = await pool.query(
         'UPDATE SPU SET name = $1, description = $2, image_url = $3 WHERE spu_id = $4 RETURNING *',
-        [name, description, image_url, spu_id]
+        [name, description, image_url, id]
       );
   
       res.json({

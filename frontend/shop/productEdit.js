@@ -62,6 +62,7 @@ async function saveSpuChanges() {
     }
 
     try {
+        console.log("保存SPU数据:", spuId);
         const response = await fetch(`${API_BASE_URL}/products/${spuId}`, {
             method: 'PUT',
             headers: {
