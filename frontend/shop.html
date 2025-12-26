@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/shop/modal.css">
     <link rel="stylesheet" href="css/shop/attributes.css">
     <link rel="stylesheet" href="css/shop/skuTable.css">
+    <link rel="stylesheet" href="css/shop/warehouse.css">
     <link rel="stylesheet" href="css/shop/responsive.css">
     
     <!-- Font Awesome -->
@@ -71,32 +72,49 @@
 
         <hr>
 
-        <!-- 商品列表 -->
-        <div id="product-list">
-            <div class="product-header">
-                <h2>商品列表</h2>
-                <button id="add-product-btn" class="btn-primary" style="display:none;">
-                    <i class="fas fa-plus"></i> 添加商品
-                </button>
+        <!-- 商品和仓库并排区域 -->
+        <div class="content-grid">
+            <!-- 商品列表 -->
+            <div id="product-list" class="grid-item">
+                <div class="product-header">
+                    <h2>商品列表</h2>
+                    <button id="add-product-btn" class="btn-primary" style="display:none;">
+                        <i class="fas fa-plus"></i> 添加商品
+                    </button>
+                </div>
+                
+                <!-- 表格视图 -->
+                <div class="table-container">
+                    <table id="products-table">
+                        <thead>
+                            <tr>
+                                <th>商品图片</th>
+                                <th>商品名称</th>
+                                <th>描述</th>
+                                <th class="actions-column">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-tbody">
+                            <tr>
+                                <td colspan="4" class="loading">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            
-            <!-- 表格视图 -->
-            <div class="table-container">
-                <table id="products-table">
-                    <thead>
-                        <tr>
-                            <th>商品图片</th>
-                            <th>商品名称</th>
-                            <th>描述</th>
-                            <th class="actions-column">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="products-tbody">
-                        <tr>
-                            <td colspan="6" class="loading">加载中...</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- 仓库管理 (仅店主可见) -->
+            <div id="warehouse-section" class="grid-item" style="display:none;">
+                <div class="warehouse-header">
+                    <h2><i class="fas fa-warehouse"></i> 仓库管理</h2>
+                    <button id="add-warehouse-btn" class="btn-primary" onclick="openAddWarehouseDialog()">
+                        <i class="fas fa-plus"></i> 添加仓库
+                    </button>
+                </div>
+
+                <div id="warehouse-list" class="warehouse-cards">
+                    <p class="loading">加载中...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -181,6 +199,98 @@
         </div>
     </div>
 
+    <!-- 添加/编辑仓库模态框 -->
+    <div id="warehouseFormModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="warehouseFormTitle">添加仓库</h3>
+                <span class="close" onclick="closeWarehouseFormModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="warehouseForm">
+                    <input type="hidden" id="warehouseCode">
+                    
+                    <div class="form-group">
+                        <label>省份 <span class="required">*</span></label>
+                        <input type="text" id="province" required placeholder="如：广东省">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>城市 <span class="required">*</span></label>
+                        <input type="text" id="city" required placeholder="如：深圳市">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>区/县</label>
+                        <input type="text" id="district" placeholder="如：南山区">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>详细地址 <span class="required">*</span></label>
+                        <textarea id="detail" rows="3" required placeholder="如：科技园南区R2-B栋5楼"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeWarehouseFormModal()">取消</button>
+                <button class="btn-primary" onclick="saveWarehouse()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 库存管理模态框 -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>库存管理 - <span id="stockWarehouseName"></span></h3>
+                <span class="close" onclick="closeStockModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="stock-actions">
+                    <button class="btn-primary" onclick="openBatchStockDialog()">
+                        <i class="fas fa-box"></i> 批量入库
+                    </button>
+                </div>
+                
+                <div class="table-container">
+                    <table id="stockTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">图片</th>
+                                <th>商品名称</th>
+                                <th>属性</th>
+                                <th style="width: 120px;">条形码</th>
+                                <th style="width: 100px;">现价</th>
+                                <th style="width: 100px;">当前库存</th>
+                                <th style="width: 220px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockTableBody">
+                            <tr><td colspan="7" class="loading">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量入库模态框 -->
+    <div id="batchStockModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>批量入库</h3>
+                <span class="close" onclick="closeBatchStockModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="batchStockList"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeBatchStockModal()">取消</button>
+                <button class="btn-primary" onclick="submitBatchStock()">确认入库</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <div id="footerContainer"></div>
     <script>
@@ -195,12 +305,12 @@
             req.send();
         })();
     </script>
-    <!-- <script src="shop.js"></script> -->
     <script src="shop/shopInfo.js"></script>
     <script src="shop/productList.js"></script>
     <script src="shop/productEdit.js"></script>
     <script src="shop/attributes.js"></script>
     <script src="shop/skuManage.js"></script>
+    <script src="shop/warehouse.js"></script>
     <script src="shop/init.js"></script>
 </body>
 </html>
