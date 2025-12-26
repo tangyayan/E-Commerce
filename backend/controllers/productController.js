@@ -220,83 +220,164 @@ exports.updateProductSpu = async (req, res) => {
   };
 
 /**
- * 创建新商品（需要登录且有店铺）
+ * 根据店铺ID获取所有SPU（商品列表）
  */
-exports.createProduct = async (req, res) => {
+exports.getProductsByShopId = async (req, res) => {
     try {
-        const { name, description, skus, attributes } = req.body;
-        const shopId = req.user.shopId;  // 从 JWT 中获取
+        const { shop_id } = req.params;
         
-        if (!shopId) {
-            return res.status(403).json({
+        if (!shop_id) {
+            return res.status(400).json({
                 success: false,
-                message: '您没有店铺权限'
+                message: '缺少店铺ID'
             });
         }
         
-        // 开始事务
-        await pool.query('BEGIN');
-        
-        // 1. 创建 SPU
-        const spuResult = await pool.query(
-            'INSERT INTO SPU (name, description, shop_id) VALUES ($1, $2, $3) RETURNING spu_id',
-            [name, description, shopId]
+        // 验证店铺是否存在
+        const shopCheck = await pool.query(
+            `SELECT shop_id, shop_name FROM Shop WHERE shop_id = $1`,
+            [shop_id]
         );
         
-        const spuId = spuResult.rows[0].spu_id;
-        
-        // 2. 创建 SKU
-        for (const sku of skus) {
-            const skuResult = await pool.query(
-                'INSERT INTO SKU (spu_id, origin_price, now_price, barcode) VALUES ($1, $2, $3, $4) RETURNING sku_id',
-                [spuId, sku.origin_price, sku.now_price, sku.barcode]
-            );
-            
-            const skuId = skuResult.rows[0].sku_id;
-            
-            // 3. 关联 SKU 属性
-            if (sku.attributes) {
-                for (const attrValueId of sku.attributes) {
-                    await pool.query(
-                        'INSERT INTO SKUAttributeValue (sku_id, value_id) VALUES ($1, $2)',
-                        [skuId, attrValueId]
-                    );
-                }
-            }
+        if (shopCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: '店铺不存在'
+            });
         }
         
-        // 4. 创建属性（如果需要）
-        if (attributes) {
-            for (const attr of attributes) {
-                const attrResult = await pool.query(
-                    'INSERT INTO AttributeKey (attr_name, spu_id) VALUES ($1, $2) RETURNING attr_id',
-                    [attr.name, spuId]
-                );
-                
-                const attrId = attrResult.rows[0].attr_id;
-                
-                for (const value of attr.values) {
-                    await pool.query(
-                        'INSERT INTO AttributeValue (attr_id, value) VALUES ($1, $2)',
-                        [attrId, value]
-                    );
-                }
-            }
-        }
+        // 获取店铺的所有SPU及统计信息
+        const query = `
+            SELECT 
+                s.spu_id,
+                s.name,
+                s.description,
+                s.image_url,
+                s.shop_id,
+                sh.shop_name
+            FROM SPU s
+            LEFT JOIN Shop sh ON s.shop_id = sh.shop_id
+            WHERE s.shop_id = $1
+            GROUP BY s.spu_id, s.name, s.description, s.image_url, s.shop_id, sh.shop_name
+            ORDER BY s.spu_id DESC
+        `;
         
-        await pool.query('COMMIT');
+        const result = await pool.query(query, [shop_id]);
         
-        res.status(201).json({
+        console.log(`获取店铺 ${shop_id} 的商品列表，共 ${result.rows.length} 个商品`);
+        
+        res.json({
             success: true,
-            message: '商品创建成功',
-            spu_id: spuId
+            shop: shopCheck.rows[0],
+            products: result.rows,
+            total: result.rows.length
         });
     } catch (error) {
-        await pool.query('ROLLBACK');
-        console.error('创建商品错误:', error);
+        console.error('获取店铺商品列表错误:', error);
         res.status(500).json({
             success: false,
-            message: '创建商品失败'
+            message: '服务器错误',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * 根据店铺ID获取所有SKU（用于批量入库等操作）
+ */
+exports.getSkusByShopId = async (req, res) => {
+    try {
+        const { shop_id } = req.params;
+        
+        if (!shop_id) {
+            return res.status(400).json({
+                success: false,
+                message: '缺少店铺ID'
+            });
+        }
+        
+        // 验证店铺是否存在
+        const shopCheck = await pool.query(
+            'SELECT shop_id, shop_name FROM Shop WHERE shop_id = $1',
+            [shop_id]
+        );
+        
+        if (shopCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: '店铺不存在'
+            });
+        }
+        
+        // 验证权限：确保是店主或有权限的用户
+        if (req.user) {
+            const userShopResult = await pool.query(
+                'SELECT shop_id FROM Shop WHERE account_id = $1',
+                [req.user.id]
+            );
+            
+            if (userShopResult.rows.length === 0 || 
+                userShopResult.rows[0].shop_id != shop_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: '无权限访问该店铺的SKU信息'
+                });
+            }
+        }
+        
+        // 获取店铺的所有SKU及其属性
+        const query = `
+            SELECT 
+                k.sku_id,
+                k.spu_id,
+                k.origin_price,
+                k.now_price,
+                k.barcode,
+                s.name as product_name,
+                s.description as product_description,
+                s.image_url,
+                -- 获取当前SKU的总库存
+                COALESCE(SUM(ws.stock), 0) as total_stock,
+                -- 获取属性（JSON格式）
+                (
+                    SELECT json_agg(
+                        json_build_object(
+                            'attr_id', ak.attr_id,
+                            'attr_name', ak.attr_name,
+                            'value_id', av.value_id,
+                            'value', av.value
+                        ) ORDER BY ak.attr_id
+                    )
+                    FROM SKUAttributeValue skuv
+                    JOIN AttributeValue av ON av.value_id = skuv.value_id
+                    JOIN AttributeKey ak ON ak.attr_id = av.attr_id
+                    WHERE skuv.sku_id = k.sku_id
+                ) as attributes
+            FROM SKU k
+            JOIN SPU s ON s.spu_id = k.spu_id
+            LEFT JOIN WarehouseStock ws ON ws.sku_id = k.sku_id
+            WHERE s.shop_id = $1
+            GROUP BY k.sku_id, k.spu_id, k.origin_price, k.now_price, k.barcode, 
+                     s.name, s.description, s.image_url
+            ORDER BY k.spu_id, k.sku_id
+        `;
+        
+        const result = await pool.query(query, [shop_id]);
+        
+        console.log(`获取店铺 ${shop_id} 的SKU列表，共 ${result.rows.length} 个SKU`);
+        
+        res.json({
+            success: true,
+            shop: shopCheck.rows[0],
+            skus: result.rows,
+            total: result.rows.length
+        });
+    } catch (error) {
+        console.error('获取店铺SKU列表错误:', error);
+        res.status(500).json({
+            success: false,
+            message: '服务器错误',
+            error: error.message
         });
     }
 };

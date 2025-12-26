@@ -18,6 +18,7 @@ const cartRoutes = require('./routes/cart');
 const userRoutes = require('./routes/user');
 const shopRoutes = require('./routes/shop');
 const orderRoutes = require('./routes/orders');
+const warehouseRoutes = require('./routes/warehouse');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -25,6 +26,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/shop', shopRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/warehouse', warehouseRoutes);
 
 // 测试路由
 app.get('/api/health', (req, res) => {

@@ -5,7 +5,7 @@
 // 加载店铺商品
 async function loadProducts() {
     try {
-        const response = await fetch(`${API_BASE_URL}/products?shop_id=${shopId}`);
+        const response = await fetch(`${API_BASE_URL}/products/shop/${shopId}`);
         const data = await response.json();
 
         if (data.success && data.products) {
