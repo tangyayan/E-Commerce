@@ -673,6 +673,68 @@ body
     animation: priceHighlight 0.5s ease;
 }
 
+/* 无效商品样式 */
+.cart-item.invalid-item {
+    background-color: #fafafa;
+    border: 1px dashed #d9d9d9;
+    opacity: 0.8;
+}
+
+.invalid-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #fff2e8;
+    border: 1px solid #ffbb96;
+    border-radius: 4px;
+    color: #fa8c16;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.invalid-badge i {
+    font-size: 16px;
+}
+
+.invalid-message {
+    color: #999;
+    font-size: 13px;
+    margin: 8px 0;
+}
+
+.snapshot-price-info {
+    color: #666;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.invalid-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0 20px;
+}
+
+.invalid-actions .remove-btn {
+    background-color: #ff4d4f;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.invalid-actions .remove-btn:hover {
+    background-color: #d9363e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3);
+}
+
 @keyframes priceHighlight {
     0% {
         transform: scale(1);

@@ -106,8 +106,11 @@ function renderCart() {
     
     // 渲染每个购物车项
     cartItems.forEach(item => {
-        const itemTotal = parseFloat(item.now_price) * parseInt(item.quantity);
-        subtotal += itemTotal;
+        let itemTotal = 0;
+        if(!item.is_invalid){
+            itemTotal = parseFloat(item.now_price) * parseInt(item.quantity);
+            subtotal += itemTotal;
+        }
         
         const boxDiv = createCartItem(item, itemTotal);
         boxContainer.appendChild(boxDiv);
@@ -123,25 +126,43 @@ function renderCart() {
 /**
  * 创建购物车项
  */
+/**
+ * 创建购物车项
+ */
 function createCartItem(item, itemTotal) {
     const boxDiv = document.createElement('div');
     boxDiv.className = 'cart-item';
     boxDiv.dataset.cartId = item.cart_id;
     
+    // 检查商品是否无效
+    const isInvalid = item.is_invalid || !item.sku_id || !item.product_name;
+    
+    if (isInvalid) {
+        boxDiv.classList.add('invalid-item');
+    }
+    
     // 商品图片
     const imgDiv = document.createElement('div');
     imgDiv.className = 'item-image';
-    imgDiv.style.cursor = 'pointer'; // 添加鼠标指针样式
-    imgDiv.onclick = () => {
-        window.location.href = `contentDetails.html?id=${item.spu_id}`;
-    };
+    
+    if (!isInvalid) {
+        imgDiv.style.cursor = 'pointer';
+        imgDiv.onclick = () => {
+            window.location.href = `contentDetails.html?id=${item.spu_id}`;
+        };
+    }
     
     const img = document.createElement('img');
-    img.src = item.image_url || 'img/default-product.jpg';
-    img.alt = item.product_name;
+    img.src = isInvalid ? 'img/invalid-product.jpg' : (item.image_url || 'img/default-product.jpg');
+    img.alt = isInvalid ? '商品已失效' : item.product_name;
     img.onerror = function() {
         this.src = 'img/default-product.png';
     };
+    
+    if (isInvalid) {
+        img.style.filter = 'grayscale(100%) opacity(0.5)';
+    }
+    
     imgDiv.appendChild(img);
     boxDiv.appendChild(imgDiv);
     
@@ -149,69 +170,101 @@ function createCartItem(item, itemTotal) {
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'item-details';
     
-    // 商品名称
-    const nameH3 = document.createElement('h3');
-    nameH3.className = 'item-name';
-    nameH3.textContent = item.product_name;
-    nameH3.style.cursor = 'pointer';
-    nameH3.onclick = () => {
-        window.location.href = `contentDetails.html?id=${item.spu_id}`;
-    };
-    detailsDiv.appendChild(nameH3);
-    
-    // 商品属性
-    if (item.attributes && item.attributes.length > 0) {
-        const attributesDiv = document.createElement('div');
-        attributesDiv.className = 'item-attributes';
-        item.attributes.forEach(attr => {
-            const attrSpan = document.createElement('span');
-            attrSpan.className = 'attr-tag';
-            attrSpan.textContent = `${attr.attr_name}: ${attr.value}`;
-            attributesDiv.appendChild(attrSpan);
-        });
-        detailsDiv.appendChild(attributesDiv);
-    }
-    
-    // 店铺名称
-    const shopP = document.createElement('p');
-    shopP.className = 'item-shop';
-    
-    if (item.shop_id) {
-        const shopLink = document.createElement('a');
-        shopLink.href = `shop.html?id=${item.shop_id}`;
-        shopLink.textContent = `店铺: ${item.shop_name || '未知'}`;
-        shopLink.style.color = '#666';
-        shopLink.style.textDecoration = 'none';
-        shopLink.onmouseover = function() {
-            this.style.color = 'rgb(3, 122, 122)';
-            this.style.textDecoration = 'underline';
-        };
-        shopLink.onmouseout = function() {
-            this.style.color = '#666';
-            this.style.textDecoration = 'none';
-        };
-        shopP.appendChild(shopLink);
+    if (isInvalid) {
+        // 无效商品提示
+        const invalidBadge = document.createElement('div');
+        invalidBadge.className = 'invalid-badge';
+        invalidBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 商品已失效';
+        detailsDiv.appendChild(invalidBadge);
+        
+        const invalidMsg = document.createElement('p');
+        invalidMsg.className = 'invalid-message';
+        invalidMsg.textContent = '该商品已被商家删除或下架，无法购买';
+        detailsDiv.appendChild(invalidMsg);
+        
+        const priceMsg = document.createElement('p');
+        priceMsg.className = 'snapshot-price-info';
+        priceMsg.textContent = `加入购物车时的价格: ¥${parseFloat(item.price_snapshot || 0).toFixed(2)}`;
+        detailsDiv.appendChild(priceMsg);
     } else {
-        shopP.textContent = `店铺: ${item.shop_name || '未知'}`;
+        // 正常商品渲染
+        const nameH3 = document.createElement('h3');
+        nameH3.className = 'item-name';
+        nameH3.textContent = item.product_name;
+        nameH3.style.cursor = 'pointer';
+        nameH3.onclick = () => {
+            window.location.href = `contentDetails.html?id=${item.spu_id}`;
+        };
+        detailsDiv.appendChild(nameH3);
+        
+        // 商品属性
+        if (item.attributes && item.attributes.length > 0) {
+            const attributesDiv = document.createElement('div');
+            attributesDiv.className = 'item-attributes';
+            item.attributes.forEach(attr => {
+                const attrSpan = document.createElement('span');
+                attrSpan.className = 'attr-tag';
+                attrSpan.textContent = `${attr.attr_name}: ${attr.value}`;
+                attributesDiv.appendChild(attrSpan);
+            });
+            detailsDiv.appendChild(attributesDiv);
+        }
+        
+        // 店铺名称
+        const shopP = document.createElement('p');
+        shopP.className = 'item-shop';
+        
+        if (item.shop_id) {
+            const shopLink = document.createElement('a');
+            shopLink.href = `shop.html?id=${item.shop_id}`;
+            shopLink.textContent = `店铺: ${item.shop_name || '未知'}`;
+            shopLink.style.color = '#666';
+            shopLink.style.textDecoration = 'none';
+            shopLink.onmouseover = function() {
+                this.style.color = 'rgb(3, 122, 122)';
+                this.style.textDecoration = 'underline';
+            };
+            shopLink.onmouseout = function() {
+                this.style.color = '#666';
+                this.style.textDecoration = 'none';
+            };
+            shopP.appendChild(shopLink);
+        } else {
+            shopP.textContent = `店铺: ${item.shop_name || '未知'}`;
+        }
+        
+        detailsDiv.appendChild(shopP);
+        
+        // 库存信息
+        const stockP = document.createElement('p');
+        stockP.className = `item-stock ${item.stock === 0 ? 'out-of-stock' : ''}`;
+        if(item.stock === 0){
+            stockP.textContent = `库存: 已售罄`;
+        } else if(item.stock <= 10){
+            stockP.textContent = `库存紧张`;
+        } else {
+            stockP.style.display = 'none';
+        }
+        detailsDiv.appendChild(stockP);
     }
-    
-    detailsDiv.appendChild(shopP);
-    
-    // 库存信息
-    const stockP = document.createElement('p');
-    stockP.className = `item-stock ${item.stock === 0 ? 'out-of-stock' : ''}`;
-    if(item.stock === 0){
-        stockP.textContent = `库存: 已售罄`;
-    } else if(item.stock <= 10){
-        stockP.textContent = `库存紧张`;
-    }
-    //否则隐藏库存信息
-    else {
-        stockP.style.display = 'none';
-    }
-    detailsDiv.appendChild(stockP);
     
     boxDiv.appendChild(detailsDiv);
+    
+    if (isInvalid) {
+        // 无效商品只显示删除按钮
+        const invalidActionsDiv = document.createElement('div');
+        invalidActionsDiv.className = 'invalid-actions';
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i> 删除';
+        removeBtn.onclick = () => removeItem(item.cart_item_id, '失效商品');
+        invalidActionsDiv.appendChild(removeBtn);
+        
+        boxDiv.appendChild(invalidActionsDiv);
+        
+        return boxDiv;
+    }
     
     // 单价
     const priceDiv = document.createElement('div');
@@ -224,20 +277,20 @@ function createCartItem(item, itemTotal) {
     priceValue.textContent = `¥${parseFloat(item.now_price).toFixed(2)}`;
     priceDiv.appendChild(priceLabel);
     priceDiv.appendChild(priceValue);
+    
     // 计算降价比例
     const snapshotPrice = parseFloat(item.price_snapshot || item.now_price);
     const currentPrice = parseFloat(item.now_price);
     const discountRate = ((snapshotPrice - currentPrice) / snapshotPrice * 100);
     const hasPriceDropped = discountRate >= 10;
     
-    // 如果有价格变化，显示快照价格（加入购物车时的价格）
+    // 如果有价格变化，显示快照价格
     if (snapshotPrice !== currentPrice) {
         const snapshotPriceSpan = document.createElement('span');
         snapshotPriceSpan.className = 'snapshot-price';
         snapshotPriceSpan.textContent = `¥${snapshotPrice.toFixed(2)}`;
         priceDiv.appendChild(snapshotPriceSpan);
         
-        // 如果降价超过10%，显示降价标签
         if (hasPriceDropped) {
             const discountBadge = document.createElement('span');
             discountBadge.className = 'discount-badge';
@@ -251,7 +304,6 @@ function createCartItem(item, itemTotal) {
     const quantityDiv = document.createElement('div');
     quantityDiv.className = 'item-quantity';
     
-    // 减少按钮
     const minusBtn = document.createElement('button');
     minusBtn.className = 'qty-btn minus';
     minusBtn.innerHTML = '<i class="fas fa-minus"></i>';
@@ -259,7 +311,6 @@ function createCartItem(item, itemTotal) {
     minusBtn.onclick = () => updateQuantity(item.cart_item_id, item.quantity - 1);
     quantityDiv.appendChild(minusBtn);
     
-    // 数量输入框
     const qtyInput = document.createElement('input');
     qtyInput.type = 'number';
     qtyInput.className = 'qty-input';
@@ -277,7 +328,6 @@ function createCartItem(item, itemTotal) {
     };
     quantityDiv.appendChild(qtyInput);
     
-    // 增加按钮
     const plusBtn = document.createElement('button');
     plusBtn.className = 'qty-btn plus';
     plusBtn.innerHTML = '<i class="fas fa-plus"></i>';

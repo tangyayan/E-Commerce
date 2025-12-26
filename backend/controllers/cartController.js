@@ -36,9 +36,73 @@ exports.getCart = async (req, res) => {
     try {
         const userId = req.user.id;
         
+        // const result = await pool.query(`
+        //     WITH cart_items AS (
+        //         -- 获取用户的购物车项
+        //         SELECT 
+        //             ci.cart_item_id,
+        //             ci.cart_id,
+        //             ci.sku_id,
+        //             ci.quantity,
+        //             ci.price_snapshot
+        //         FROM Cart c
+        //         INNER JOIN CartItem ci ON ci.cart_id = c.cart_id
+        //         WHERE c.account_id = $1
+        //     ),
+        //     stock_summary AS (
+        //         -- 计算每个 SKU 的库存汇总
+        //         SELECT 
+        //             ws.sku_id,
+        //             w.shop_id,
+        //             COALESCE(SUM(ws.stock), 0) as total_stock
+        //         FROM WarehouseStock ws
+        //         LEFT JOIN Warehouse w ON w.code = ws.code
+        //         WHERE ws.sku_id IN (SELECT sku_id FROM cart_items)
+        //         GROUP BY ws.sku_id, w.shop_id
+        //     ),
+        //     attribute_summary AS (
+        //         -- 计算每个 SKU 的属性
+        //         SELECT 
+        //             skuv.sku_id,
+        //             json_agg(
+        //                 json_build_object(
+        //                     'attr_name', ak.attr_name,
+        //                     'value', v.value
+        //                 ) ORDER BY ak.attr_id
+        //             ) FILTER (WHERE v.value_id IS NOT NULL) as attributes
+        //         FROM SKUAttributeValue skuv
+        //         LEFT JOIN AttributeValue v ON v.value_id = skuv.value_id
+        //         LEFT JOIN AttributeKey ak ON ak.attr_id = v.attr_id
+        //         WHERE skuv.sku_id IN (SELECT sku_id FROM cart_items)
+        //         GROUP BY skuv.sku_id
+        //     )
+        //     SELECT 
+        //         ci.cart_item_id,
+        //         ci.cart_id,
+        //         ci.sku_id,
+        //         ci.quantity,
+        //         ci.price_snapshot,                        -- 加入购物车时的价格
+        //         k.now_price,                              -- 当前价格
+        //         k.origin_price,                           -- 原价
+        //         k.barcode,
+        //         spu.spu_id,
+        //         spu.name as product_name,
+        //         spu.image_url,
+        //         spu.description,
+        //         shop.shop_id,
+        //         shop.shop_name,
+        //         COALESCE(ss.total_stock, 0) as stock,    -- 库存
+        //         COALESCE(ats.attributes, '[]'::json) as attributes  -- 属性
+        //     FROM cart_items ci
+        //     INNER JOIN SKU k ON k.sku_id = ci.sku_id
+        //     INNER JOIN SPU spu ON spu.spu_id = k.spu_id
+        //     INNER JOIN Shop shop ON shop.shop_id = spu.shop_id
+        //     LEFT JOIN stock_summary ss ON ss.sku_id = k.sku_id
+        //     LEFT JOIN attribute_summary ats ON ats.sku_id = k.sku_id
+        //     ORDER BY shop.shop_id
+        // `, [userId]);
         const result = await pool.query(`
             WITH cart_items AS (
-                -- 获取用户的购物车项
                 SELECT 
                     ci.cart_item_id,
                     ci.cart_id,
@@ -50,18 +114,16 @@ exports.getCart = async (req, res) => {
                 WHERE c.account_id = $1
             ),
             stock_summary AS (
-                -- 计算每个 SKU 的库存汇总
                 SELECT 
                     ws.sku_id,
                     w.shop_id,
                     COALESCE(SUM(ws.stock), 0) as total_stock
                 FROM WarehouseStock ws
                 LEFT JOIN Warehouse w ON w.code = ws.code
-                WHERE ws.sku_id IN (SELECT sku_id FROM cart_items)
+                WHERE ws.sku_id IN (SELECT sku_id FROM cart_items WHERE sku_id IS NOT NULL)
                 GROUP BY ws.sku_id, w.shop_id
             ),
             attribute_summary AS (
-                -- 计算每个 SKU 的属性
                 SELECT 
                     skuv.sku_id,
                     json_agg(
@@ -73,7 +135,7 @@ exports.getCart = async (req, res) => {
                 FROM SKUAttributeValue skuv
                 LEFT JOIN AttributeValue v ON v.value_id = skuv.value_id
                 LEFT JOIN AttributeKey ak ON ak.attr_id = v.attr_id
-                WHERE skuv.sku_id IN (SELECT sku_id FROM cart_items)
+                WHERE skuv.sku_id IN (SELECT sku_id FROM cart_items WHERE sku_id IS NOT NULL)
                 GROUP BY skuv.sku_id
             )
             SELECT 
@@ -81,9 +143,9 @@ exports.getCart = async (req, res) => {
                 ci.cart_id,
                 ci.sku_id,
                 ci.quantity,
-                ci.price_snapshot,                        -- 加入购物车时的价格
-                k.now_price,                              -- 当前价格
-                k.origin_price,                           -- 原价
+                ci.price_snapshot,
+                COALESCE(k.now_price, 0) as now_price,
+                COALESCE(k.origin_price, 0) as origin_price,
                 k.barcode,
                 spu.spu_id,
                 spu.name as product_name,
@@ -91,17 +153,23 @@ exports.getCart = async (req, res) => {
                 spu.description,
                 shop.shop_id,
                 shop.shop_name,
-                COALESCE(ss.total_stock, 0) as stock,    -- 库存
-                COALESCE(ats.attributes, '[]'::json) as attributes  -- 属性
+                COALESCE(ss.total_stock, 0) as stock,
+                COALESCE(ats.attributes, '[]'::json) as attributes,
+                CASE 
+                    WHEN ci.sku_id IS NULL OR k.sku_id IS NULL THEN true
+                    ELSE false
+                END as is_invalid
             FROM cart_items ci
-            INNER JOIN SKU k ON k.sku_id = ci.sku_id
-            INNER JOIN SPU spu ON spu.spu_id = k.spu_id
-            INNER JOIN Shop shop ON shop.shop_id = spu.shop_id
+            LEFT JOIN SKU k ON k.sku_id = ci.sku_id
+            LEFT JOIN SPU spu ON spu.spu_id = k.spu_id
+            LEFT JOIN Shop shop ON shop.shop_id = spu.shop_id
             LEFT JOIN stock_summary ss ON ss.sku_id = k.sku_id
             LEFT JOIN attribute_summary ats ON ats.sku_id = k.sku_id
-            ORDER BY shop.shop_id
+            ORDER BY 
+                CASE WHEN ci.sku_id IS NULL OR k.sku_id IS NULL THEN 1 ELSE 0 END,
+                shop.shop_id
         `, [userId]);
-        
+
         res.json({
             success: true,
             cart: result.rows,
