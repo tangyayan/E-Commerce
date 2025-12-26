@@ -271,6 +271,11 @@ async function confirmNewAttribute(index) {
     
     const spuId = document.getElementById('editSpuId').value;
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    if(!spuId)
+    {
+        alert('无法获取商品ID，无法添加属性');
+        return;
+    }
     
     try {
         const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/add`, {

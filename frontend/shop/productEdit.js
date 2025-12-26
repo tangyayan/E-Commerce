@@ -81,6 +81,7 @@ async function saveSpuChanges() {
         
         if (result.success) {
             alert('基本信息保存成功');
+            document.getElementById('editSpuId').value = result.product.spu_id; 
             loadProducts();
         } else {
             alert('保存失败: ' + (result.message || '未知错误'));
