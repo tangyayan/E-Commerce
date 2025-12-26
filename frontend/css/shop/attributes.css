@@ -168,7 +168,7 @@
 
 /* ===== 新建属性 ===== */
 .attr-name-input-new {
-    width: 100%;
+    width: 70%;
     padding: 10px 12px;
     border: 1px solid #1677ff;
     border-radius: 6px;
@@ -246,4 +246,21 @@
 
 .btn-delete-attr:hover {
     background-color: #d9363e;
+}
+
+/* 禁用状态 */
+.btn-add-attribute:disabled {
+    background-color: #d9d9d9;  /* 灰色背景 */
+    color: #999;                /* 灰色文字 */
+    cursor: not-allowed;        /* 禁用光标 */
+    opacity: 0.6;               /* 半透明 */
+    transform: none;            /* 无变形 */
+    box-shadow: none;           /* 无阴影 */
+}
+
+/* 禁用状态 hover 不改变样式 */
+.btn-add-attribute:disabled:hover {
+    background-color: #d9d9d9;
+    transform: none;
+    box-shadow: none;
 }

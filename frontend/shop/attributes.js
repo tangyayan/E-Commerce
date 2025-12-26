@@ -69,9 +69,65 @@ function renderAttributes() {
         
         attrValuesDiv.appendChild(valuesContainer);
         attrDiv.appendChild(attrValuesDiv);
+
+        const deleteAttrDiv = document.createElement('div');
+        deleteAttrDiv.className = 'attr-delete-action';
+        deleteAttrDiv.innerHTML = `
+            <button type="button" class="btn-delete-attr" onclick="deleteAttribute(${index})" title="删除整个属性">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        `;
+        attrDiv.appendChild(deleteAttrDiv);
         
         container.appendChild(attrDiv);
     });
+}
+
+
+// 删除属性
+async function deleteAttribute(attrIndex) {
+    const attr = currentAttributes[attrIndex];
+    
+    if (!confirm(`确定删除属性"${attr.attr_name}"吗？\n删除后该属性的所有属性值也将被删除，且相关的SKU也将被删除！`)) {
+        return;
+    }
+    
+    // 如果是未保存的新属性，直接删除
+    if (!attr.attr_id) {
+        currentAttributes.splice(attrIndex, 1);
+        renderAttributes();
+        return;
+    }
+    
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}/attributes/${attr.attr_id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        const result = await response.json();
+        console.log('删除属性结果:', result);
+        
+        if (result.success) {
+            // 从数组中移除
+            currentAttributes.splice(attrIndex, 1);
+            
+            // 重新渲染
+            renderAttributes();
+            
+            alert('属性删除成功！');
+        } else {
+            alert('删除失败: ' + (result.message || '未知错误'));
+        }
+    } catch (error) {
+        console.error('删除属性失败:', error);
+        alert('删除失败: ' + error.message);
+    }
 }
 
 // 添加属性行
