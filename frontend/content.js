@@ -46,20 +46,28 @@ function dynamicClothingSection(product) {
     let priceDiv = document.createElement("div");
     priceDiv.className = "price-info";
 
-    // 原价（如果有折扣）
-    if (product.origin_price && product.origin_price > product.now_price) {
-        let originalPrice = document.createElement("span");
-        originalPrice.className = "original-price";
-        originalPrice.appendChild(document.createTextNode("¥" + product.origin_price));
-        priceDiv.appendChild(originalPrice);
+    if(!product.origin_price || !product.now_price) {
+        let priceUnavailable = document.createElement("span");
+        priceUnavailable.className = "price-unavailable";
+        priceUnavailable.appendChild(document.createTextNode("价格不可用"));
+        priceDiv.appendChild(priceUnavailable);
     }
+    else {
+        // 原价（如果有折扣）
+        if (product.origin_price && product.origin_price > product.now_price) {
+            let originalPrice = document.createElement("span");
+            originalPrice.className = "original-price";
+            originalPrice.appendChild(document.createTextNode("¥" + product.origin_price));
+            priceDiv.appendChild(originalPrice);
+        }
 
-    // 现价
-    let h2 = document.createElement("h2");
-    h2.className = "current-price";
-    h2.appendChild(document.createTextNode("¥" + product.now_price));
-    priceDiv.appendChild(h2);
-
+        // 现价
+        let h2 = document.createElement("h2");
+        h2.className = "current-price";
+        h2.appendChild(document.createTextNode("¥" + product.now_price));
+        priceDiv.appendChild(h2);
+    }
+    
     // 库存信息
     let stockSpan = document.createElement("span");
     stockSpan.className = "stock-info";
