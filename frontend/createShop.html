@@ -3,98 +3,117 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>创建店铺</title>
-    <style>
-        /* 全局样式 */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f2f5;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        /* 容器 */
-        .container {
-            background: #ffffff;
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-            width: 400px;
-        }
-
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 25px;
-        }
-
-        /* 表单元素 */
-        input,
-        textarea {
-            width: 100%;
-            padding: 12px 15px;
-            margin-top: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        input:focus,
-        textarea:focus {
-            border-color: #4a90e2;
-            outline: none;
-            box-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
-        }
-
-        textarea {
-            resize: vertical;
-        }
-
-        /* 按钮 */
-        button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 20px;
-            background: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.2s ease;
-        }
-
-        button:hover {
-            background: #357ab8;
-            transform: translateY(-2px);
-        }
-
-        /* 响应式 */
-        @media (max-width: 450px) {
-            .container {
-                width: 90%;
-                padding: 20px;
-            }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>创建店铺 | E-COMMERCE WEBSITE</title>
+    
+    <!-- favicon -->
+    <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16">
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/b921c4663e.js" crossorigin="anonymous"></script>
+    
+    <!-- CSS 文件 -->
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/createShop.css">
 </head>
 
 <body>
-    <div class="container">
-        <h2>创建店铺</h2>
-        <form id="createShopForm">
-            <input type="text" id="shop_name" placeholder="店铺名称" required />
-            <textarea id="description" placeholder="店铺描述（可选）" rows="4"></textarea>
-            <button type="submit">创建店铺</button>
-        </form>
+    <!-- HEADER -->
+    <div id="1"></div>
+    <script>
+        load("header.html");
+        function load(url)
+        {
+            req = new XMLHttpRequest();
+            req.open("GET", url, false);
+            req.send(null);
+            document.getElementById(1).innerHTML = req.responseText;
+        }
+    </script>
+
+    <!-- 主内容 -->
+    <div class="main-content">
+        <div class="create-shop-container">
+            <!-- 标题 -->
+            <div class="page-title">
+                <h2>
+                    <i class="fas fa-store"></i>
+                    <span>创建店铺</span>
+                </h2>
+                <p>开启您的电商之旅</p>
+            </div>
+
+            <!-- 提示信息 -->
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <div class="info-text">
+                    <strong>温馨提示：</strong>
+                    <ul>
+                        <li>店铺名称将作为您的品牌标识</li>
+                        <li>店铺描述可以帮助顾客更好地了解您的店铺</li>
+                        <li>创建后可在店铺管理中修改信息</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 创建店铺表单 -->
+            <form id="createShopForm">
+                <!-- 店铺名称 -->
+                <div class="form-group">
+                    <label for="shop_name">
+                        店铺名称 <span class="required">*</span>
+                    </label>
+                    <div class="input-icon">
+                        <!-- <i class="fas fa-store-alt"></i> -->
+                        <input 
+                            type="text" 
+                            id="shop_name" 
+                            name="shop_name"
+                            placeholder="请输入店铺名称" 
+                            required 
+                            minlength="2"
+                            maxlength="50"
+                            autocomplete="off"
+                        />
+                    </div>
+                    <span class="helper-text" id="nameCounter">0/50 字符</span>
+                </div>
+
+                <!-- 店铺描述 -->
+                <div class="form-group">
+                    <label for="description">
+                        店铺描述
+                    </label>
+                    <textarea 
+                        id="description" 
+                        name="description"
+                        placeholder="介绍一下您的店铺特色、经营理念等..."
+                        maxlength="500"
+                    ></textarea>
+                    <span class="helper-text" id="descCounter">0/500 字符（可选）</span>
+                </div>
+
+                <!-- 按钮组 -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>返回</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <div class="loading"></div>
+                        <span class="btn-text">
+                            <i class="fas fa-check"></i>
+                            <span>创建店铺</span>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <script src="createShop.js" defer></script>
+    <!-- JavaScript 文件 -->
+    <script src="createShop.js"></script>
 </body>
 
 </html>

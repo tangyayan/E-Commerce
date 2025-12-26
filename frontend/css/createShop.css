@@ -1,0 +1,377 @@
+/**
+ * 创建店铺页面样式
+ */
+
+/* ===== 全局样式重置 ===== */
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Lato', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+    background: #f0f2f5;
+    min-height: 100vh;
+}
+
+/* ===== 主容器 ===== */
+.main-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+    padding: 100px;
+}
+
+/* ===== 创建店铺容器 ===== */
+.create-shop-container {
+    background: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 500px;
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== 页面标题 ===== */
+.page-title {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-title h2 {
+    color: #333;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.page-title h2 i {
+    color: #667eea;
+}
+
+.page-title p {
+    color: #666;
+    font-size: 14px;
+}
+
+/* ===== 提示信息框 ===== */
+.info-box {
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: start;
+    gap: 12px;
+}
+
+.info-box i {
+    color: #1890ff;
+    margin-top: 2px;
+    font-size: 16px;
+}
+
+.info-box .info-text {
+    flex: 1;
+    font-size: 13px;
+    color: #0050b3;
+    line-height: 1.8;
+}
+
+.info-box .info-text strong {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.info-box ul {
+    margin: 5px 0 0 20px;
+    padding: 0;
+}
+
+.info-box ul li {
+    margin-bottom: 5px;
+}
+
+/* ===== 表单组 ===== */
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.form-group label .required {
+    color: #ff4d4f;
+    margin-left: 2px;
+}
+
+/* ===== 输入框容器（带图标） ===== */
+.input-icon {
+    position: relative;
+}
+
+.input-icon i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+    z-index: 1;
+}
+
+.input-icon input {
+    padding-left: 45px;
+}
+
+/* ===== 输入框样式 ===== */
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #fff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group input:hover,
+.form-group textarea:hover {
+    border-color: #b8b8b8;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+/* ===== 辅助文本 ===== */
+.form-group .helper-text {
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+    display: block;
+}
+
+/* ===== 按钮容器 ===== */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+/* ===== 按钮基础样式 ===== */
+.btn {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* ===== 主要按钮 ===== */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* ===== 次要按钮 ===== */
+.btn-secondary {
+    background: #f5f5f5;
+    color: #666;
+    border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background: #e8e8e8;
+    border-color: #d0d0d0;
+}
+
+/* ===== 禁用状态 ===== */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ===== 加载动画 ===== */
+.loading {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn-primary.is-loading .loading {
+    display: block;
+}
+
+.btn-primary.is-loading .btn-text {
+    display: none;
+}
+
+/* ===== 成功提示框 ===== */
+.success-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+    color: white;
+    padding: 25px 35px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    animation: successFadeIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.success-message i {
+    font-size: 28px;
+}
+
+@keyframes successFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* ===== 响应式设计 ===== */
+@media (max-width: 768px) {
+    body {
+        padding-top: 60px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+
+    .create-shop-container {
+        padding: 30px 20px;
+    }
+
+    .page-title h2 {
+        font-size: 24px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .create-shop-container {
+        padding: 25px 15px;
+    }
+
+    .page-title h2 {
+        font-size: 22px;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .info-box {
+        padding: 12px;
+    }
+
+    .info-box .info-text {
+        font-size: 12px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        font-size: 16px; /* 防止 iOS 缩放 */
+    }
+}
+
+/* ===== 打印样式 ===== */
+@media print {
+    body {
+        background: white;
+        padding-top: 0;
+    }
+
+    .create-shop-container {
+        box-shadow: none;
+    }
+
+    .form-actions,
+    .info-box {
+        display: none;
+    }
+}

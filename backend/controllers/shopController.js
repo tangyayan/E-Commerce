@@ -119,20 +119,6 @@ exports.createShop = async (req, res) => {
       });
     }
 
-    // 检查是否有description列，如果没有则添加
-    const hasDescriptionColumn = await pool.query(`
-      SELECT column_name
-      FROM information_schema.columns
-      WHERE table_name = 'shop' AND column_name = 'shop_description'
-    `);
-
-    if (hasDescriptionColumn.rows.length === 0) {
-      await pool.query(`
-        ALTER TABLE shop
-        ADD COLUMN shop_description TEXT
-      `);
-    }
-
     // 创建店铺
     const result = await pool.query(
       `INSERT INTO shop (shop_name, account_id, shop_description)
