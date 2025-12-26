@@ -319,10 +319,10 @@ function renderWarehouseStock(stock) {
         return `
             <tr>
                 <td>
-                    <img src="${item.image_url || 'img/default-product.png'}" 
+                    <img src="${item.image_url || 'img/default-product.jpg'}" 
                          alt="${item.product_name}" 
                          class="product-image-small"
-                         onerror="this.src='img/default-product.png'">
+                         onerror="this.src='img/default-product.jpg'">
                 </td>
                 <td>${item.product_name || '未知商品'}</td>
                 <td>${attributes}</td>
@@ -438,10 +438,10 @@ function renderBatchStockList(skus) {
         
         return `
             <div class="batch-stock-item">
-                <img src="${sku.image_url || 'img/default-product.png'}" 
+                <img src="${sku.image_url || 'img/default-product.jpg'}" 
                      alt="${sku.product_name}" 
                      class="product-image-small"
-                     onerror="this.src='img/default-product.png'">
+                     onerror="this.src='img/default-product.jpg'">
                 <div class="batch-stock-info">
                     <h4>${sku.product_name}</h4>
                     <p>${attributes}</p>
