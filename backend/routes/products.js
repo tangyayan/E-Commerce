@@ -22,6 +22,7 @@ router.put('/:spu_id/attributes/:attr_id', authMiddleware, productController_att
 router.post('/:spu_id/attributes/:attr_id/values', authMiddleware, productController_attr.addAttributeValue); // 添加属性值
 router.put('/:spu_id/attributes/:attr_id/values/:value_id', authMiddleware, productController_attr.updateAttributeValue); // 更新属性值
 router.delete('/:spu_id/attributes/:attr_id/values/:value_id', authMiddleware, productController_attr.deleteAttributeValue); // 删除属性值
+router.delete('/:spu_id/attributes/:attr_id', authMiddleware, productController_attr.deleteAttributeKey); // 删除属性键
 
 // SKU相关路由
 router.post('/:spu_id/skus', authMiddleware, productController_sku.createSKU);// 创建SKU

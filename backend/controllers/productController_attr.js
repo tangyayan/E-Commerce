@@ -264,3 +264,59 @@ exports.deleteAttributeValue = async (req, res) => {
     client.release();
   }
 };
+
+/**
+ * 删除属性键
+ */
+exports.deleteAttributeKey = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { spu_id, attr_id } = req.params;
+
+    // 验证权限
+    const checkResult = await client.query(
+      'SELECT shop_id FROM SPU WHERE spu_id = $1',
+      [spu_id]
+    );
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '商品不存在' });
+    }
+
+    const productShopId = checkResult.rows[0].shop_id;
+    
+    const userShopResult = await client.query(
+      'SELECT shop_id FROM Shop WHERE account_id = $1',
+      [req.user.id]
+    );
+
+    if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
+      return res.status(403).json({ success: false, message: '无权限修改此商品' });
+    }
+
+    await client.query('BEGIN');
+
+    // 删除属性值
+    await client.query(
+      'DELETE FROM AttributeValue WHERE attr_id = $1',
+      [attr_id]
+    );
+
+    // 删除属性键
+    await client.query(
+      'DELETE FROM AttributeKey WHERE attr_id = $1',
+      [attr_id]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({ success: true, message: '属性键删除成功' });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('删除属性键失败:', error);
+    res.status(500).json({ success: false, message: '删除失败: ' + error.message });
+  } finally {
+    client.release();
+  }
+};

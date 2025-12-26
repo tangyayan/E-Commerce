@@ -121,7 +121,7 @@ CREATE TRIGGER trg_check_sku_attributes_before
 BEFORE INSERT ON SKUAttributeValue
 FOR EACH ROW
 EXECUTE PROCEDURE check_sku_attributes_before();
--- 删除attributeKey处理，防止删除仍在使用的属性值
+-- 删除attributeValue处理，防止删除仍在使用的属性值
 CREATE OR REPLACE FUNCTION check_attributevalue_in_use()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -141,6 +141,27 @@ CREATE TRIGGER trg_check_attributevalue_in_use
 BEFORE DELETE ON AttributeValue
 FOR EACH ROW
 EXECUTE PROCEDURE check_attributevalue_in_use();
+-- 删除attributeKey处理，防止删除仍在使用的属性键
+CREATE OR REPLACE FUNCTION check_attributekey_in_use()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- 检查该属性值是否被任何 SKU 使用
+    IF EXISTS (
+        select 1
+        from skuattributevalue sav
+        join attributevalue av on sav.value_id=av.value_id
+        where av.attr_id=OLD.attr_id
+    ) THEN
+        RAISE EXCEPTION '无法删除属性键 ID %: 该属性键正在被 SKU 使用', OLD.attr_id;
+    END IF;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER trg_check_attributekey_in_use
+BEFORE DELETE ON attributekey
+FOR EACH ROW
+EXECUTE PROCEDURE check_attributekey_in_use();
 
 --仓库信息
 CREATE TABLE IF NOT EXISTS warehouse (--一般先有shop再有warehouse
