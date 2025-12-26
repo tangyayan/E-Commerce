@@ -172,19 +172,19 @@ exports.deleteSKU = async (req, res) => {
         //     });
         // }
 
-        // 检查SKU是否在购物车中被使用
-        const cartCheckResult = await client.query(
-            'SELECT cart_item_id FROM CartItem WHERE sku_id = $1',
-            [sku_id]
-        );
+        // 检查SKU是否在购物车中被使用 set null
+        // const cartCheckResult = await client.query(
+        //     'SELECT cart_item_id FROM CartItem WHERE sku_id = $1',
+        //     [sku_id]
+        // );
 
-        if (cartCheckResult.rows.length > 0) {
-            // 从购物车中删除该SKU
-            await client.query(
-                'DELETE FROM CartItem WHERE sku_id = $1',
-                [sku_id]
-            );
-        }
+        // if (cartCheckResult.rows.length > 0) {
+        //     // 从购物车中删除该SKU
+        //     await client.query(
+        //         'DELETE FROM CartItem WHERE sku_id = $1',
+        //         [sku_id]
+        //     );
+        // }
 
         await client.query('BEGIN');
 

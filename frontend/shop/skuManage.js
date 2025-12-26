@@ -27,7 +27,6 @@ function renderSKUs() {
     const fixedHeaders = [
         { text: '原价', width: '100px' },
         { text: '现价', width: '100px' },
-        { text: '库存', width: '80px' },
         { text: '条形码', width: '150px' },
         { text: '操作', width: '80px' }
     ];
@@ -41,8 +40,8 @@ function renderSKUs() {
     });
 
     if (currentSKUs.length === 0) {
-        const colspan = 6 + currentAttributes.length;
-        tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">暂无SKU，点击"生成SKU组合"创建</td></tr>`;
+        const colspan = 5 + currentAttributes.length;
+        tbody.innerHTML = `<tr><td colspan="${colspan}" class="no-data">暂无SKU</td></tr>`;
         return;
     }
 
@@ -58,13 +57,24 @@ function renderSKUs() {
         
         // 属性值下拉选择
         if (sku.attributes) {
-            sku.attributes.forEach((attrValue, attrIndex) => {
+            currentAttributes.forEach((attr, attrIndex) => {
                 const td = document.createElement('td');
                 td.style.width = '120px';
                 td.style.minWidth = '120px';
                 
-                const attr = currentAttributes.find(a => a.attr_id === attrValue.attr_id);
-                if (attr) {
+                // 在 SKU 的属性中查找对应的属性值
+                let skuAttr = null;
+                let skuAttrIndex = -1;
+                
+                if (sku.attributes && sku.attributes.length > 0) {
+                    skuAttrIndex = sku.attributes.findIndex(a => a.attr_id === attr.attr_id);
+                    if (skuAttrIndex !== -1) {
+                        skuAttr = sku.attributes[skuAttrIndex];
+                    }
+                }
+                
+                // 如果找到了对应的属性值，渲染下拉框
+                if (attr.values && attr.values.length > 0) {
                     const select = document.createElement('select');
                     select.className = 'sku-select';
                     select.onchange = () => updateSKUAttribute(index, attrIndex, select.value);
@@ -73,17 +83,53 @@ function renderSKUs() {
                         const option = document.createElement('option');
                         const vText = typeof v === 'string' ? v : v.value;
                         const vId = typeof v === 'string' ? null : v.value_id;
-                        option.value = vId;
+                        
+                        option.value = vId || '';
                         option.textContent = vText;
-                        if (vId === attrValue.value_id || vText === attrValue.value) {
-                            option.selected = true;
+                        
+                        // 匹配当前选中的值
+                        if (skuAttr) {
+                            if (vId && skuAttr.value_id && vId == skuAttr.value_id) {
+                                option.selected = true;
+                            } else if (!vId && !skuAttr.value_id && vText === skuAttr.value) {
+                                option.selected = true;
+                            }
                         }
+                        
                         select.appendChild(option);
                     });
                     
+                    // 如果没有选中项，默认选择第一个
+                    if (select.selectedIndex === -1) {
+                        select.selectedIndex = 0;
+                        
+                        // 同步更新 SKU 数据
+                        const firstValue = attr.values[0];
+                        const firstValueId = typeof firstValue === 'string' ? null : firstValue.value_id;
+                        const firstValueText = typeof firstValue === 'string' ? firstValue : firstValue.value;
+                        
+                        // 如果 SKU 没有这个属性，添加它
+                        if (!skuAttr) {
+                            if (!sku.attributes) {
+                                sku.attributes = [];
+                            }
+                            sku.attributes.push({
+                                attr_id: attr.attr_id,
+                                attr_name: attr.attr_name,
+                                value_id: firstValueId,
+                                value: firstValueText
+                            });
+                        } else {
+                            // 更新现有属性
+                            skuAttr.value_id = firstValueId;
+                            skuAttr.value = firstValueText;
+                        }
+                    }
+                    
                     td.appendChild(select);
                 } else {
-                    td.textContent = attrValue.value;
+                    // 如果属性没有可选值，显示文本
+                    td.textContent = skuAttr ? skuAttr.value : '-';
                 }
                 
                 tr.appendChild(td);
@@ -129,20 +175,6 @@ function renderSKUs() {
         tdNowPrice.appendChild(inputNowPrice);
         tr.appendChild(tdNowPrice);
         
-        // 库存
-        const tdStock = document.createElement('td');
-        tdStock.style.width = '80px';
-        tdStock.style.minWidth = '80px';
-        const inputStock = document.createElement('input');
-        inputStock.type = 'number';
-        inputStock.className = 'sku-input';
-        inputStock.min = '0';
-        inputStock.value = sku.stock || '';
-        inputStock.placeholder = '库存';
-        inputStock.onchange = () => updateSKUField(index, 'stock', inputStock.value);
-        tdStock.appendChild(inputStock);
-        tr.appendChild(tdStock);
-        
         // 条形码
         const tdBarcode = document.createElement('td');
         tdBarcode.style.width = '150px';
@@ -170,7 +202,7 @@ function renderSKUs() {
         btnCommit.type = 'button';
         btnCommit.className = 'btn-save-small';
         btnCommit.innerHTML = '<i class="fas fa-check"></i>';
-        btnCommit.onclick = () => saveSKU();
+        btnCommit.onclick = () => saveSKU(index);
         tdAction.appendChild(btnCommit);
         tr.appendChild(tdAction);
         
@@ -180,6 +212,7 @@ function renderSKUs() {
 
 // 更新SKU属性值
 function updateSKUAttribute(skuIndex, attrIndex, valueId) {
+    console.log('更新SKU属性:', { skuIndex, attrIndex, valueId });
     const sku = currentSKUs[skuIndex];
     if (!sku.attributes || !sku.attributes[attrIndex]) return;
     
@@ -247,36 +280,114 @@ async function deleteSKU(index) {
     renderSKUs();
 }
 
-// 保存所有SKU修改
-async function saveSKU() {
-    const spuId = document.getElementById('editSpuId').value;
-    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+/**
+ * 检查属性组合是否重复
+ * @param {number} currentIndex - 当前SKU的索引
+ * @returns {boolean} - 如果重复返回true
+ */
+function checkDuplicateAttributes(currentIndex) {
+    const currentSKU = currentSKUs[currentIndex];
     
-    const invalidSKUs = currentSKUs.filter(sku => {
-        return !sku.origin_price || !sku.now_price || sku.now_price > sku.origin_price;
-    });
-    
-    if (invalidSKUs.length > 0) {
-        alert('请检查SKU数据:\n1. 原价和现价不能为空\n2. 现价不能大于原价');
-        return;
+    // 如果没有属性，不检查
+    if (!currentSKU.attributes || currentSKU.attributes.length === 0) {
+        return false;
     }
     
+    // 生成当前SKU的属性组合签名
+    const currentSignature = generateAttributeSignature(currentSKU.attributes);
+    
+    // 检查其他SKU是否有相同的属性组合
+    for (let i = 0; i < currentSKUs.length; i++) {
+        // 跳过自己
+        if (i === currentIndex) {
+            continue;
+        }
+        
+        const otherSKU = currentSKUs[i];
+        
+        // 如果其他SKU没有属性，跳过
+        if (!otherSKU.attributes || otherSKU.attributes.length === 0) {
+            continue;
+        }
+        
+        // 生成其他SKU的属性组合签名
+        const otherSignature = generateAttributeSignature(otherSKU.attributes);
+        
+        // 如果签名相同，说明属性组合重复
+        if (currentSignature === otherSignature) {
+            console.log('发现重复的属性组合:', {
+                current: currentSKU.attributes,
+                duplicate: otherSKU.attributes
+            });
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+/**
+ * 生成属性组合的唯一签名
+ * @param {Array} attributes - 属性数组
+ * @returns {string} - 属性组合的签名字符串
+ */
+function generateAttributeSignature(attributes) {
+    // 按 attr_id 排序，确保顺序一致
+    const sortedAttrs = [...attributes].sort((a, b) => a.attr_id - b.attr_id);
+    
+    // 生成签名：attr_id:value_id|attr_id:value_id|...
+    const signature = sortedAttrs.map(attr => {
+        const valueId = attr.value_id || attr.value || '';
+        return `${attr.attr_id}:${valueId}`;
+    }).join('|');
+    
+    return signature;
+}
+
+// 保存单个SKU修改
+async function saveSKU(index) {
+    const sku = currentSKUs[index];
+    console.log('保存SKU数据:', sku);
+    const spuId = document.getElementById('editSpuId').value;
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+
+    // 验证当前SKU数据
+    if (!sku.origin_price || !sku.now_price) {
+        alert('请填写原价和现价');
+        return;
+    }
+
+    // if (sku.now_price > sku.origin_price) {
+    //     alert('现价不能大于原价');
+    //     return;
+    // }
+    // 检查属性组合是否重复
+    const isDuplicate = checkDuplicateAttributes(index);
+    if (isDuplicate) {
+        alert('该属性组合已存在，请修改后再保存');
+        return;
+    }
+
     try {
-        const response = await fetch(`${API_BASE_URL}/products/${spuId}/skus`, {
-            method: 'PUT',
+        const response = await fetch(`${API_BASE_URL}/products/${spuId}/skus/${sku.sku_id || ''}`, {
+            method: sku.sku_id ? 'PUT' : 'POST', // 如果有sku_id则更新，否则创建
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ skus: currentSKUs })
+            body: JSON.stringify(sku)
         });
-        
+
         const result = await response.json();
-        console.log('保存SKU结果:', result);
-        
+        console.log('保存单个SKU结果:', result);
+
         if (result.success) {
             alert('SKU保存成功！');
-            await loadAttributesAndSKUs(spuId);
+            // 更新SKU ID（如果是新建的）
+            if (!sku.sku_id) {
+                sku.sku_id = result.sku.sku_id;
+            }
+            renderSKUs(); // 重新渲染表格
         } else {
             alert('保存失败: ' + (result.message || '未知错误'));
         }
@@ -284,4 +395,49 @@ async function saveSKU() {
         console.error('保存SKU失败:', error);
         alert('保存失败: ' + error.message);
     }
+}
+
+/**
+ * 添加一个新的SKU行
+ */
+function addSKUs() {
+    // 检查是否有属性
+    if (currentAttributes.length === 0) {
+        alert('请先添加商品属性后再添加SKU');
+        return;
+    }
+    
+    // 检查每个属性是否至少有一个值
+    const emptyAttributes = currentAttributes.filter(attr => {
+        return !attr.values || attr.values.length === 0;
+    });
+    
+    if (emptyAttributes.length > 0) {
+        const attrNames = emptyAttributes.map(attr => attr.attr_name).join('、');
+        alert(`以下属性没有可选值,请先添加属性值:\n${attrNames}`);
+        return;
+    }
+    
+    console.log('当前属性:', currentAttributes);
+
+    // 创建一个新的SKU对象
+    const newSKU = {
+        sku_id: null, // 新增的SKU没有ID
+        origin_price: 0,
+        now_price: 0,
+        stock: 0,
+        barcode: '',
+        attributes: currentAttributes.map(attr => ({
+            attr_id: attr.attr_id,
+            value_id: attr.values[0].value_id,
+            value: attr.values[0].value
+        })),
+        isNew: true // 标记为新增
+    };
+
+    // 将新SKU添加到currentSKUs数组
+    currentSKUs.push(newSKU);
+
+    // 重新渲染表格
+    renderSKUs();
 }

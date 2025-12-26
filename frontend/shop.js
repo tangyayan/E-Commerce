@@ -1,3 +1,4 @@
+// 已废弃，请使用 shop/
 // 解析 URL 参数 ?id=xxx
 const params = new URLSearchParams(window.location.search);
 const shopId = params.get('id');

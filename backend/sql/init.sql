@@ -165,7 +165,7 @@ CREATE TABLE IF NOT EXISTS Cart (
 CREATE TABLE IF NOT EXISTS CartItem (
     cart_item_id SERIAL PRIMARY KEY,
     cart_id INT REFERENCES Cart(cart_id) ON DELETE CASCADE,
-    sku_id INT REFERENCES SKU(sku_id) ON DELETE CASCADE,
+    sku_id INT REFERENCES SKU(sku_id) ON DELETE SET NULL,
     quantity INT NOT NULL CHECK (quantity > 0),
     price_snapshot DECIMAL(10,2) CHECK (price_snapshot >= 0 or price_snapshot IS NULL)
 );
