@@ -373,7 +373,7 @@ async function updateStock(skuId, operation) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ stock, operation })
+            body: JSON.stringify({ stock , operation })
         });
         
         const result = await response.json();

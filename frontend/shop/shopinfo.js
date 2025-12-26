@@ -46,6 +46,7 @@ function loadShopInfo() {
 async function checkOwnership() {
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     if (!token) {
+        console.log('未登录用户');
         document.getElementById('edit-shop-btn').style.display = 'none';
         isOwner = false;
         loadProducts();

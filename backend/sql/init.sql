@@ -156,6 +156,33 @@ CREATE TABLE IF NOT EXISTS WarehouseStock (
     PRIMARY KEY (code, sku_id)
 );
 
+-- 库存更新函数：如果存在则更新库存，否则插入新记录
+CREATE OR REPLACE FUNCTION upsert_warehouse_stock(
+    p_code INT,
+    p_sku_id INT,
+    p_stock INT
+)
+RETURNS TABLE(code INT, sku_id INT, stock INT) AS $$
+BEGIN
+    -- 尝试更新
+    UPDATE WarehouseStock 
+    SET stock = stock + p_stock
+    WHERE WarehouseStock.code = p_code AND WarehouseStock.sku_id = p_sku_id;
+    
+    -- 如果没有更新到，则插入
+    IF NOT FOUND THEN
+        INSERT INTO WarehouseStock (code, sku_id, stock)
+        VALUES (p_code, p_sku_id, p_stock);
+    END IF;
+    
+    -- 返回结果
+    RETURN QUERY
+    SELECT ws.code, ws.sku_id, ws.stock
+    FROM WarehouseStock ws
+    WHERE ws.code = p_code AND ws.sku_id = p_sku_id;
+END;
+$$ LANGUAGE plpgsql;
+
 --创建购物车
 CREATE TABLE IF NOT EXISTS Cart (
     cart_id SERIAL PRIMARY KEY,
@@ -175,7 +202,7 @@ CREATE UNIQUE INDEX idx_cart_sku_unique ON CartItem(cart_id, sku_id); --确保�
 CREATE TABLE IF NOT EXISTS shipping_address(
     address_id SERIAL PRIMARY KEY, --感觉好像不需要？
     account_id INT REFERENCES Account(account_id) ON DELETE CASCADE,
-    address json NOT NULL, --格式：{"street": "...", "city": "...", "state": "...", "country": "..."}
+    address json NOT NULL, --格式：{"province": "...", "city": "...", "district": "...", "detail": "..."}
     phone_number VARCHAR(50) NOT NULL,
     recipient_name VARCHAR(100) NOT NULL
 );
@@ -195,7 +222,7 @@ CREATE TABLE IF NOT EXISTS OrderItem (
     sku_id INT REFERENCES SKU(sku_id) ON DELETE SET NULL,
 
     price_snapshot DECIMAL(10,2) NOT NULL,
-    shipping_address_snapshot json NOT NULL,--格式：{"street": "...", "city": "...", "state": "...", "country": "..."}
+    shipping_address_snapshot json NOT NULL,--格式：{"province": "...", "city": "...", "district": "...", "detail": "..."}
     spu_name_snapshot VARCHAR(255) NOT NULL
 );
 

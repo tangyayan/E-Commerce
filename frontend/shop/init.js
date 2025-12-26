@@ -2,7 +2,10 @@
  * 初始化模块
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // 获取店铺ID
+    const urlParams = new URLSearchParams(window.location.search);
+    currentShopId = urlParams.get('id');
     // 初始化店铺编辑事件
     initShopEditEvents();
     
@@ -11,4 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addProductBtn) {
         addProductBtn.addEventListener('click', showAddProductModal);
     }
+
+    initWarehouseManagement(currentShopId);
 });

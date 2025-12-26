@@ -8,11 +8,13 @@ const authMiddleware = require('../middleware/auth');
 // 公开路由（无需登录）
 router.get('/', productController.getAllProducts);
 router.get('/:id', productController.getProductById);
+router.get('/shop/:shop_id', productController.getProductsByShopId);
 
 // 需要登录的路由
-router.post('/', authMiddleware, productController.createProduct);
+// router.post('/', authMiddleware, productController.createProduct);
 router.put('/:id', authMiddleware, productController.updateProductSpu);
 // router.delete('/:id', authMiddleware, productController.deleteProduct);
+router.get('/shop/:shop_id/skus', authMiddleware, productController.getSkusByShopId); // 获取店铺所有SKUs
 
 // 属性相关路由
 router.post('/:spu_id/attributes/add', authMiddleware, productController_attr.addProductAttribute); // 添加新属性
