@@ -49,11 +49,15 @@ async function loadAttributesAndSKUs(spuId) {
 async function saveSpuChanges() {
     const spuId = document.getElementById('editSpuId').value;
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+
+    const params = new URLSearchParams(window.location.search);
+    const shop_id = Number(params.get('id'));
     
     const spuData = {
         name: document.getElementById('productName').value.trim(),
         description: document.getElementById('productDesc').value.trim(),
-        image_url: document.getElementById('productImage').value.trim()
+        image_url: document.getElementById('productImage').value.trim(),
+        shop_id: shop_id
     };
 
     if (!spuData.name) {
@@ -62,7 +66,7 @@ async function saveSpuChanges() {
     }
 
     try {
-        console.log("保存SPU数据:", spuId);
+        console.log("保存SPU数据:", spuData);
         const response = await fetch(`${API_BASE_URL}/products/${spuId}`, {
             method: 'PUT',
             headers: {

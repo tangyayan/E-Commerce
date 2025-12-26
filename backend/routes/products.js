@@ -13,6 +13,7 @@ router.get('/shop/:shop_id', productController.getProductsByShopId);
 // 需要登录的路由
 // router.post('/', authMiddleware, productController.createProduct);
 router.put('/:id', authMiddleware, productController.updateProductSpu);
+router.put('/', authMiddleware, productController.createProductSpu);
 // router.delete('/:id', authMiddleware, productController.deleteProduct);
 router.get('/shop/:shop_id/skus', authMiddleware, productController.getSkusByShopId); // 获取店铺所有SKUs
 

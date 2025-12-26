@@ -220,6 +220,40 @@ exports.updateProductSpu = async (req, res) => {
   };
 
 /**
+ * 创建SPU基本信息
+ */
+exports.createProductSpu = async (req, res) => {
+    try {
+      const { name, description, image_url, shop_id } = req.body;
+      
+      // 获取用户的店铺ID
+      const userShopResult = await pool.query(
+        'SELECT shop_id FROM Shop WHERE account_id = $1',
+        [req.user.id]
+      );
+      
+      if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== shop_id) {
+        return res.status(403).json({ success: false, message: '无权限修改此商品' });
+      }
+  
+      // 更新SPU
+      const result = await pool.query(
+        'INSERT INTO SPU(name, description, image_url, shop_id) VALUES($1, $2, $3, $4) RETURNING *',
+        [name, description, image_url, shop_id]
+      );
+  
+      res.json({
+        success: true,
+        message: '插入成功',
+        product: result.rows[0]
+      });
+    } catch (error) {
+      console.error('插入商品失败:', error);
+      res.status(500).json({ success: false, message: '服务器错误' });
+    }
+  };
+
+/**
  * 根据店铺ID获取所有SPU（商品列表）
  */
 exports.getProductsByShopId = async (req, res) => {
