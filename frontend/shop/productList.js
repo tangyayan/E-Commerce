@@ -2,6 +2,33 @@
  * 商品列表模块
  */
 
+// 缓存原始商品数据，用于搜索过滤
+let allProducts = [];
+
+// 初始化搜索框事件
+function initProductSearch() {
+    const searchInput = document.getElementById('product-search');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', () => {
+        const keyword = searchInput.value.trim().toLowerCase();
+
+        if (!keyword) {
+            // 无关键字：显示全部
+            renderProducts(allProducts);
+            return;
+        }
+
+        const filtered = allProducts.filter(p => {
+            const name = (p.name || '').toLowerCase();
+            const desc = (p.description || '').toLowerCase();
+            return name.includes(keyword) || desc.includes(keyword);
+        });
+
+        renderProducts(filtered);
+    });
+}
+
 // 加载店铺商品
 async function loadProducts() {
     try {
@@ -9,7 +36,12 @@ async function loadProducts() {
         const data = await response.json();
 
         if (data.success && data.products) {
-            renderProducts(data.products);
+            // 缓存原始数据
+            allProducts = data.products || [];
+            // 先渲染全部
+            renderProducts(allProducts);
+            // 初始化搜索事件（只需初始化一次，这里多次调用也无害）
+            initProductSearch();
         } else {
             document.getElementById('products').innerHTML = '<p class="no-products">暂无商品</p>';
         }
@@ -24,7 +56,7 @@ function renderProducts(products) {
     const tbody = document.getElementById('products-tbody');
     const addBtn = document.getElementById('add-product-btn');
     const actionsColumn = document.querySelector('.actions-column');
-    
+
     tbody.innerHTML = '';
 
     // 根据是否是店主显示操作列和添加按钮
@@ -44,7 +76,7 @@ function renderProducts(products) {
     products.forEach(product => {
         const tr = document.createElement('tr');
         tr.className = isOwner ? '' : 'clickable-row';
-        
+
         tr.innerHTML = `
             <td class="img-cell">
                 <img src="${product.image_url || 'img/default-product.jpg'}" alt="${product.name}">

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>SHOP | E-COMMERCE WEBSITE</title>
-    
+
     <!-- favicon -->
-    <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16"> 
+    <link rel="icon" href="img/x-icon.png" type="image/png" sizes="16x16">
     <!-- CSS -->
     <link rel="stylesheet" href="css/header.css">
     <!-- 引入模块化CSS -->
@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="css/shop/skuTable.css">
     <link rel="stylesheet" href="css/shop/warehouse.css">
     <link rel="stylesheet" href="css/shop/responsive.css">
-    
+
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/b921c4663e.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css?family=Lato&display=swap" rel="stylesheet">
@@ -78,11 +78,12 @@
             <div id="product-list" class="grid-item">
                 <div class="product-header">
                     <h2>商品列表</h2>
+                    <input type="text" id="product-search" placeholder="搜索商品名称或描述"/>
                     <button id="add-product-btn" class="btn-primary" style="display:none;">
                         <i class="fas fa-plus"></i> 添加商品
                     </button>
                 </div>
-                
+
                 <!-- 表格视图 -->
                 <div class="table-container">
                     <table id="products-table">
@@ -126,7 +127,7 @@
                 <h3 id="modalTitle">编辑商品</h3>
                 <span class="close" onclick="closeEditModal()">&times;</span>
             </div>
-            
+
             <!-- SPU信息编辑 -->
             <div class="modal-body">
                 <section class="spu-section">
@@ -209,22 +210,22 @@
             <div class="modal-body">
                 <form id="warehouseForm">
                     <input type="hidden" id="warehouseCode">
-                    
+
                     <div class="form-group">
                         <label>省份 <span class="required">*</span></label>
                         <input type="text" id="province" required placeholder="如：广东省">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>城市 <span class="required">*</span></label>
                         <input type="text" id="city" required placeholder="如：深圳市">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>区/县</label>
                         <input type="text" id="district" placeholder="如：南山区">
                     </div>
-                    
+
                     <div class="form-group">
                         <label>详细地址 <span class="required">*</span></label>
                         <textarea id="detail" rows="3" required placeholder="如：科技园南区R2-B栋5楼"></textarea>
@@ -251,7 +252,7 @@
                         <i class="fas fa-box"></i> 批量入库
                     </button>
                 </div>
-                
+
                 <div class="table-container">
                     <table id="stockTable">
                         <thead>
