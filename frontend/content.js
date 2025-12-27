@@ -67,7 +67,7 @@ function dynamicClothingSection(product) {
         h2.appendChild(document.createTextNode("¥" + product.now_price));
         priceDiv.appendChild(h2);
     }
-    
+
     // 库存信息
     let stockSpan = document.createElement("span");
     stockSpan.className = "stock-info";
@@ -94,7 +94,7 @@ function dynamicClothingSection(product) {
 async function loadProducts() {
     try {
         console.log('开始获取商品数据...');
-        
+
         // 显示加载提示
         const containerClothing = document.getElementById("containerClothing");
         if (containerClothing) {
@@ -103,17 +103,18 @@ async function loadProducts() {
 
         // 从后端获取商品数据
         const response = await fetch(`${API_BASE_URL}/products`);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log('获取到的商品数据:', data);
 
         if (data.success && data.products) {
             contentTitle = data.products;
-            
+            // 默认应用一次（此时都为空，相当于渲染全部）
+            applyFiltersAndSort();
             // 渲染商品列表
             renderProducts(contentTitle);
         } else {
@@ -129,7 +130,7 @@ async function loadProducts() {
 // ==================== 渲染商品列表 ====================
 function renderProducts(products) {
     const containerClothing = document.getElementById("containerClothing");
-    
+
     // 清空容器
     if (containerClothing) containerClothing.innerHTML = '';
 
@@ -143,7 +144,7 @@ function renderProducts(products) {
     // 遍历并渲染商品
     products.forEach(product => {
         const productElement = dynamicClothingSection(product);
-        
+
         // 根据商品类型添加到不同容器
         if (containerClothing) {
             containerClothing.appendChild(productElement);
@@ -151,6 +152,58 @@ function renderProducts(products) {
     });
 
     console.log(`已渲染 ${products.length} 个商品`);
+}
+
+function applyFiltersAndSort() {
+    let products = [...contentTitle]; // 拷贝一份原始数据
+
+    const priceSortSelect = document.getElementById('priceSort');
+    const nameSortSelect = document.getElementById('nameSort');
+    const attrFilterInput = document.getElementById('attrFilter');   // 属性筛选输入框
+
+    const priceSort = priceSortSelect ? priceSortSelect.value : '';
+    const nameSort = nameSortSelect ? nameSortSelect.value : '';
+    const attrFilter = attrFilterInput ? attrFilterInput.value.trim() : '';
+
+    // 1. 属性筛选：例如输入“黑色 XL”，要求商品属性中同时包含“黑色”和“XL”
+    if (attrFilter) {
+        const keywords = attrFilter
+            .split(/\s+/)       // 按空格拆成 ["黑色", "XL"]
+            .filter(Boolean)
+            .map(k => k.toLowerCase());
+
+        products = products.filter(p => {
+            // 后端建议返回 attr_text，例如 "颜色:黑色; 尺码:XL"
+            const attrText = (p.attr_text || '').toLowerCase();
+            // 所有关键字都要命中
+            return keywords.every(kw => attrText.includes(kw));
+        });
+    }
+
+    // 2. 价格排序
+    if (priceSort) {
+        products.sort((a, b) => {
+            const pa = a.now_price ?? a.origin_price ?? 0;
+            const pb = b.now_price ?? b.origin_price ?? 0;
+            return priceSort === 'asc' ? (pa - pb) : (pb - pa);
+        });
+    }
+
+    // 3. 名称排序
+    if (nameSort) {
+        products.sort((a, b) => {
+            const na = (a.name || '').toLowerCase();
+            const nb = (b.name || '').toLowerCase();
+            if (na === nb) return 0;
+            if (nameSort === 'asc') {
+                return na < nb ? -1 : 1;
+            } else {
+                return na > nb ? -1 : 1;
+            }
+        });
+    }
+
+    renderProducts(products);
 }
 
 // ==================== 显示错误信息 ====================
@@ -173,7 +226,7 @@ function searchProducts(keyword) {
         return;
     }
 
-    const filtered = contentTitle.filter(product => 
+    const filtered = contentTitle.filter(product =>
         product.name.toLowerCase().includes(keyword.toLowerCase()) ||
         (product.description && product.description.toLowerCase().includes(keyword.toLowerCase()))
     );
@@ -186,12 +239,45 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('页面加载完成，开始获取商品数据');
     loadProducts();
 
-    // 绑定搜索功能（如果有搜索框）
+    // 绑定搜索功能（如果有搜索框，通常在 header 里）
     const searchInput = document.getElementById('input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchProducts(e.target.value);
         });
+    }
+
+    // 绑定属性筛选输入框
+    const attrFilterInput = document.getElementById('attrFilter');
+    if (attrFilterInput) {
+        let attrTimer = null;
+
+        // 输入停止 300ms 自动筛选
+        attrFilterInput.addEventListener('input', () => {
+            clearTimeout(attrTimer);
+            attrTimer = setTimeout(() => {
+                applyFiltersAndSort();
+            }, 300);
+        });
+
+        // 回车立刻筛选
+        attrFilterInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyFiltersAndSort();
+            }
+        });
+    }
+
+    // 绑定价格 / 名称排序下拉框
+    const priceSortSelect = document.getElementById('priceSort');
+    const nameSortSelect = document.getElementById('nameSort');
+
+    if (priceSortSelect) {
+        priceSortSelect.addEventListener('change', applyFiltersAndSort);
+    }
+    if (nameSortSelect) {
+        nameSortSelect.addEventListener('change', applyFiltersAndSort);
     }
 });
 

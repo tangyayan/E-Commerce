@@ -16,6 +16,24 @@
     <div id="mainContainer">
 
         <h1> 发现你喜欢的 </h1>
+
+        <!-- 新增：筛选 / 排序工具栏 -->
+        <div id="toolbar">
+            <input id="attrFilter" type="text" placeholder="按属性筛选，如：黑色 XL">
+
+            <select id="priceSort">
+                <option value="">按价格排序</option>
+                <option value="asc">价格从低到高</option>
+                <option value="desc">价格从高到低</option>
+            </select>
+
+            <select id="nameSort">
+                <option value="">按名称排序</option>
+                <option value="asc">名称 A → Z</option>
+                <option value="desc">名称 Z → A</option>
+            </select>
+        </div>
+
         <div id="containerClothing">
             <!-- JS rendered code -->
         </div>

@@ -21,7 +21,7 @@ h1
     margin: auto;
     padding-bottom: 40px;
 }
-#box 
+#box
 {
     width: 100%;
     background-color: white;
@@ -50,7 +50,7 @@ h1
     padding: 0 15px;
     text-transform: capitalize;
 }
-#box a 
+#box a
 {
     text-decoration: none;
     color: rgb(29, 29, 29);
@@ -84,7 +84,7 @@ h2
 }
 @media(max-width: 850px)
 {
-    h1 
+    h1
     {
         width: 80%;
     }
@@ -94,7 +94,7 @@ h2
         grid-gap: 70px 20px;
         grid-template-columns: repeat(3, 1fr);
         width: 80%;
-    }    
+    }
 }
 @media(max-width: 650px)
 {
@@ -102,7 +102,7 @@ h2
     {
         font-size: 20px;
     }
-    h1 
+    h1
     {
         width: 90%;
     }
@@ -113,7 +113,7 @@ h2
 }
 @media(max-width: 600px)
 {
-    h1 
+    h1
     {
         width: 70%;
     }
@@ -124,7 +124,7 @@ h2
 }
 @media(max-width: 505px)
 {
-    h1 
+    h1
     {
         width: 80%;
     }
@@ -224,4 +224,72 @@ h2
 /* 悬停时显示下划线（对所有状态生效）*/
 .shop-link:hover {
     text-decoration: underline !important; /* 使用 !important 确保优先级 */
+}
+
+#toolbar {
+    width: 80%;
+    margin: 12px auto 24px;
+
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* 每个控件统一高度和视觉风格 */
+#toolbar input,
+#toolbar select {
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+    color: #1f2933;
+    background-color: #f9fafb;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* 属性输入框稍微宽一点 */
+#attrFilter {
+    min-width: 220px;
+    flex: 1 1 220px;
+}
+
+/* 下拉框固定宽度，排版整齐 */
+#priceSort,
+#nameSort {
+    min-width: 160px;
+}
+
+/* hover / focus 效果 */
+#toolbar input:hover,
+#toolbar select:hover {
+    background-color: #ffffff;
+    border-color: #cbd5e1;
+}
+
+#toolbar input:focus,
+#toolbar select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    background-color: #ffffff;
+}
+
+/* 小屏幕下纵向排列，更好看 */
+@media (max-width: 768px) {
+    #toolbar {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    #toolbar input,
+    #toolbar select {
+        width: 100%;
+    }
 }

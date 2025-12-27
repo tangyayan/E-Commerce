@@ -5,9 +5,9 @@ async function initCartBadge() {
     const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
     const badge = document.getElementById('badge');
     const session_badge = sessionStorage.getItem('badge');
-    
+
     if (!badge) return;
-    
+
     // 如果未登录，隐藏徽章
     if (!token) {
         badge.style.display = 'none';
@@ -23,7 +23,7 @@ async function initCartBadge() {
 
         const result = await response.json();
         console.log("获取购物车数量结果:", result);
-        
+
         if (result.success) {
             const badge = document.getElementById('badge');
             if (badge) {
@@ -44,7 +44,7 @@ function checkUserLoginStatus() {
     const userTokenSession = sessionStorage.getItem('userToken');
     const userInfoSession = sessionStorage.getItem('userInfo');
     const userLink = document.getElementById('userLink');
-    
+
     if (userLink) {
         //userLink.href = ((userToken && userInfo) || (userTokenSession && userInfoSession)) ? 'user.html' : 'login.html';
         if ((userToken && userInfo) || (userTokenSession && userInfoSession)) {

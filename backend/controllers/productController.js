@@ -1,47 +1,67 @@
 const pool = require('../config/database');
 
 /**
- * 获取所有商品（SPU + SKU）
+ * 获取所有商品（SPU + SKU），增加 attr_text 字段用于前端属性筛选
  */
 exports.getAllProducts = async (req, res) => {
     try {
         const { category, minPrice, maxPrice, shop_id } = req.query;
-        
+
         let query = `
-            SELECT 
+            SELECT
                 s.spu_id,
                 s.name,
                 s.description,
                 s.shop_id,
                 s.image_url,
                 sh.shop_name,
-                MIN(k.now_price) as now_price,
-                MIN(k.origin_price) as origin_price,
-                SUM(ws.stock) as total_stock
+                MIN(k.now_price)    AS now_price,
+                MIN(k.origin_price) AS origin_price,
+                SUM(ws.stock)       AS total_stock,
+                -- 把该 SPU 下所有 SKU 的属性拼成一个字符串，例如 "颜色:黑色; 尺码:XL"
+                COALESCE(
+                    string_agg(
+                        DISTINCT ak.attr_name || ':' || av.value,
+                        '; '
+                    ),
+                    ''
+                ) AS attr_text
             FROM SPU s
             LEFT JOIN SKU k ON s.spu_id = k.spu_id
             LEFT JOIN Shop sh ON s.shop_id = sh.shop_id
             LEFT JOIN WarehouseStock ws ON k.sku_id = ws.sku_id
+            -- 属性相关表：通过 SKU → SKUAttributeValue → AttributeValue → AttributeKey
+            LEFT JOIN SKUAttributeValue sav ON sav.sku_id = k.sku_id
+            LEFT JOIN AttributeValue av ON av.value_id = sav.value_id
+            LEFT JOIN AttributeKey ak ON ak.attr_id = av.attr_id
             WHERE 1=1
         `;
-        
+
         const params = [];
         let paramIndex = 1;
-        
-        // 添加过滤条件
+
+        // 保留你原来的过滤逻辑：按店铺过滤
         if (shop_id) {
             query += ` AND s.shop_id = $${paramIndex}`;
             params.push(shop_id);
             paramIndex++;
         }
-        
+
+        // 若以后要加价格过滤，可在这里按 minPrice / maxPrice 拼条件
+
         query += `
-            GROUP BY s.spu_id, s.name, s.description, s.shop_id, sh.shop_name, s.image_url
+            GROUP BY
+                s.spu_id,
+                s.name,
+                s.description,
+                s.shop_id,
+                sh.shop_name,
+                s.image_url
+            ORDER BY s.spu_id DESC
         `;
-        //以后可以增加排序
-        
+
         const result = await pool.query(query, params);
-        
+
         res.json({
             success: true,
             products: result.rows,
@@ -62,10 +82,10 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         // 获取 SPU 基本信息
         const spuResult = await pool.query(`
-            SELECT 
+            SELECT
                 s.*,
                 sh.shop_name,
                 sh.shop_id
@@ -73,22 +93,22 @@ exports.getProductById = async (req, res) => {
             LEFT JOIN Shop sh ON s.shop_id = sh.shop_id
             WHERE s.spu_id = $1
         `, [id]);
-        
+
         if (spuResult.rows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: '商品不存在'
             });
         }
-        
+
         const spu = spuResult.rows[0];
-        
+
         // 获取所有 SKU
         // CTE: 使用 CTE 优化查询，避免重复计算库存和属性
         const skuResult = await pool.query(`
             WITH stock_summary AS (
                 -- 先计算每个 SKU 的库存汇总（避免重复）
-                SELECT 
+                SELECT
                     ws.sku_id,
                     COALESCE(SUM(ws.stock), 0) as total_stock,
                     -- 库存最多的仓库地址
@@ -108,7 +128,7 @@ exports.getProductById = async (req, res) => {
             ),
             attribute_summary AS (
                 -- 再计算每个 SKU 的属性（避免重复）
-                SELECT 
+                SELECT
                     skuv.sku_id,
                     json_agg(
                         json_build_object(
@@ -123,7 +143,7 @@ exports.getProductById = async (req, res) => {
                 LEFT JOIN attributekey ak ON ak.attr_id = v.attr_id
                 GROUP BY skuv.sku_id
             )
-            SELECT 
+            SELECT
                 k.sku_id,
                 k.spu_id,
                 k.origin_price,
@@ -139,10 +159,10 @@ exports.getProductById = async (req, res) => {
             WHERE k.spu_id = $1
             ORDER BY k.sku_id
         `, [id]);
-        
+
         // 获取属性
         const attrResult = await pool.query(`
-            SELECT 
+            SELECT
                 ak.attr_id,
                 ak.attr_name,
                 json_agg(json_build_object(
@@ -154,7 +174,7 @@ exports.getProductById = async (req, res) => {
             WHERE ak.spu_id = $1
             GROUP BY ak.attr_id, ak.attr_name
         `, [id]);
-        
+
         res.json({
             success: true,
             product: {
@@ -179,35 +199,35 @@ exports.updateProductSpu = async (req, res) => {
     try {
       const { id } = req.params;
       const { name, description, image_url } = req.body;
-  
+
       // 验证权限：检查商品是否属于该用户的店铺
       const checkResult = await pool.query(
         'SELECT s.shop_id FROM SPU s WHERE s.spu_id = $1',
         [id]
       );
-  
+
       if (checkResult.rows.length === 0) {
         return res.status(404).json({ success: false, message: '商品不存在' });
       }
-  
+
       const productShopId = checkResult.rows[0].shop_id;
-      
+
       // 获取用户的店铺ID
       const userShopResult = await pool.query(
         'SELECT shop_id FROM Shop WHERE account_id = $1',
         [req.user.id]
       );
-  
+
       if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== productShopId) {
         return res.status(403).json({ success: false, message: '无权限修改此商品' });
       }
-  
+
       // 更新SPU
       const result = await pool.query(
         'UPDATE SPU SET name = $1, description = $2, image_url = $3 WHERE spu_id = $4 RETURNING *',
         [name, description, image_url, id]
       );
-  
+
       res.json({
         success: true,
         message: '更新成功',
@@ -225,23 +245,23 @@ exports.updateProductSpu = async (req, res) => {
 exports.createProductSpu = async (req, res) => {
     try {
       const { name, description, image_url, shop_id } = req.body;
-      
+
       // 获取用户的店铺ID
       const userShopResult = await pool.query(
         'SELECT shop_id FROM Shop WHERE account_id = $1',
         [req.user.id]
       );
-      
+
       if (userShopResult.rows.length === 0 || userShopResult.rows[0].shop_id !== shop_id) {
         return res.status(403).json({ success: false, message: '无权限修改此商品' });
       }
-  
+
       // 更新SPU
       const result = await pool.query(
         'INSERT INTO SPU(name, description, image_url, shop_id) VALUES($1, $2, $3, $4) RETURNING *',
         [name, description, image_url, shop_id]
       );
-  
+
       res.json({
         success: true,
         message: '插入成功',
@@ -259,30 +279,30 @@ exports.createProductSpu = async (req, res) => {
 exports.getProductsByShopId = async (req, res) => {
     try {
         const { shop_id } = req.params;
-        
+
         if (!shop_id) {
             return res.status(400).json({
                 success: false,
                 message: '缺少店铺ID'
             });
         }
-        
+
         // 验证店铺是否存在
         const shopCheck = await pool.query(
             `SELECT shop_id, shop_name FROM Shop WHERE shop_id = $1`,
             [shop_id]
         );
-        
+
         if (shopCheck.rows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: '店铺不存在'
             });
         }
-        
+
         // 获取店铺的所有SPU及统计信息
         const query = `
-            SELECT 
+            SELECT
                 s.spu_id,
                 s.name,
                 s.description,
@@ -295,11 +315,11 @@ exports.getProductsByShopId = async (req, res) => {
             GROUP BY s.spu_id, s.name, s.description, s.image_url, s.shop_id, sh.shop_name
             ORDER BY s.spu_id DESC
         `;
-        
+
         const result = await pool.query(query, [shop_id]);
-        
+
         console.log(`获取店铺 ${shop_id} 的商品列表，共 ${result.rows.length} 个商品`);
-        
+
         res.json({
             success: true,
             shop: shopCheck.rows[0],
@@ -322,35 +342,35 @@ exports.getProductsByShopId = async (req, res) => {
 exports.getSkusByShopId = async (req, res) => {
     try {
         const { shop_id } = req.params;
-        
+
         if (!shop_id) {
             return res.status(400).json({
                 success: false,
                 message: '缺少店铺ID'
             });
         }
-        
+
         // 验证店铺是否存在
         const shopCheck = await pool.query(
             'SELECT shop_id, shop_name FROM Shop WHERE shop_id = $1',
             [shop_id]
         );
-        
+
         if (shopCheck.rows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: '店铺不存在'
             });
         }
-        
+
         // 验证权限：确保是店主或有权限的用户
         if (req.user) {
             const userShopResult = await pool.query(
                 'SELECT shop_id FROM Shop WHERE account_id = $1',
                 [req.user.id]
             );
-            
-            if (userShopResult.rows.length === 0 || 
+
+            if (userShopResult.rows.length === 0 ||
                 userShopResult.rows[0].shop_id != shop_id) {
                 return res.status(403).json({
                     success: false,
@@ -358,10 +378,10 @@ exports.getSkusByShopId = async (req, res) => {
                 });
             }
         }
-        
+
         // 获取店铺的所有SKU及其属性
         const query = `
-            SELECT 
+            SELECT
                 k.sku_id,
                 k.spu_id,
                 k.origin_price,
@@ -391,15 +411,15 @@ exports.getSkusByShopId = async (req, res) => {
             JOIN SPU s ON s.spu_id = k.spu_id
             LEFT JOIN WarehouseStock ws ON ws.sku_id = k.sku_id
             WHERE s.shop_id = $1
-            GROUP BY k.sku_id, k.spu_id, k.origin_price, k.now_price, k.barcode, 
+            GROUP BY k.sku_id, k.spu_id, k.origin_price, k.now_price, k.barcode,
                      s.name, s.description, s.image_url
             ORDER BY k.spu_id, k.sku_id
         `;
-        
+
         const result = await pool.query(query, [shop_id]);
-        
+
         console.log(`获取店铺 ${shop_id} 的SKU列表，共 ${result.rows.length} 个SKU`);
-        
+
         res.json({
             success: true,
             shop: shopCheck.rows[0],
