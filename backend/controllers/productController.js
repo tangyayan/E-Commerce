@@ -435,3 +435,102 @@ exports.getSkusByShopId = async (req, res) => {
         });
     }
 };
+
+/**
+ * 删除商品（按 SPU 删除）
+ * 顺序：
+ * 1. 删与该 SPU 相关的 AttributeValue / AttributeKey
+ * 2. 删 SPU（SKU 有 ON DELETE CASCADE，会连带 SKU / SKUAttributeValue / WarehouseStock 等）
+ */
+exports.deleteProduct = async (req, res) => {
+    const { id } = req.params;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 0. 检查是否存在
+        const checkRes = await client.query(
+            'SELECT spu_id FROM SPU WHERE spu_id = $1',
+            [id]
+        );
+        if (checkRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({
+                success: false,
+                message: '商品不存在'
+            });
+        }
+
+        // 1. 找到该 SPU 下的所有属性键 attr_id
+        const attrKeyRes = await client.query(
+            'SELECT attr_id FROM AttributeKey WHERE spu_id = $1',
+            [id]
+        );
+        const attrIds = attrKeyRes.rows.map(r => r.attr_id);
+
+        if (attrIds.length > 0) {
+            // 2. 找到这些属性键下的所有属性值 value_id
+            const attrValueRes = await client.query(
+                `
+                SELECT value_id
+                FROM AttributeValue
+                WHERE attr_id = ANY($1::int[])
+                `,
+                [attrIds]
+            );
+            const valueIds = attrValueRes.rows.map(r => r.value_id);
+
+            if (valueIds.length > 0) {
+                // 3. 删 SKUAttributeValue 中引用这些属性值的记录
+                await client.query(
+                    `
+                    DELETE FROM SKUAttributeValue
+                    WHERE value_id = ANY($1::int[])
+                    `,
+                    [valueIds]
+                );
+
+                // 4. 删 AttributeValue
+                await client.query(
+                    `
+                    DELETE FROM AttributeValue
+                    WHERE value_id = ANY($1::int[])
+                    `,
+                    [valueIds]
+                );
+            }
+
+            // 5. 删 AttributeKey
+            await client.query(
+                `
+                DELETE FROM AttributeKey
+                WHERE attr_id = ANY($1::int[])
+                `,
+                [attrIds]
+            );
+        }
+
+        // 6. 最后删除 SPU（会级联删除相关 SKU、SKUAttributeValue、WarehouseStock 等）
+        await client.query(
+            'DELETE FROM SPU WHERE spu_id = $1',
+            [id]
+        );
+
+        await client.query('COMMIT');
+
+        return res.json({
+            success: true,
+            message: '删除成功'
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('删除商品错误:', error);
+        return res.status(500).json({
+            success: false,
+            message: '服务器错误'
+        });
+    } finally {
+        client.release();
+    }
+};
