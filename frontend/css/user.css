@@ -634,3 +634,46 @@ body {
     font-size: 24px;
     margin-bottom: 8px;
 }
+
+.page-container {
+    max-width: 960px;
+    margin: 150px auto 40px;
+    padding: 0 16px;
+}
+
+.edit-profile-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.edit-profile-card h1 {
+    margin: 0 0 16px;
+    font-size: 22px;
+}
+
+.edit-profile-card .form-group {
+    margin-bottom: 16px;
+}
+
+.edit-profile-card label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.edit-profile-card input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.edit-profile-card .form-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
