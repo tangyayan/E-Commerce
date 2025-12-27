@@ -6,23 +6,23 @@ const pool = require('../config/database');
 exports.getWarehousesByShop = async (req, res) => {
     try {
         const { shop_id } = req.params;
-        
+
         // 验证权限
         const shopCheck = await pool.query(
             'SELECT account_id FROM Shop WHERE shop_id = $1',
             [shop_id]
         );
-        
+
         if (shopCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '店铺不存在' });
         }
-        
+
         if (shopCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限访问' });
         }
-        
+
         const result = await pool.query(
-            `SELECT 
+            `SELECT
                 w.code,
                 w.shop_id,
                 w.address,
@@ -35,7 +35,7 @@ exports.getWarehousesByShop = async (req, res) => {
             ORDER BY w.code`,
             [shop_id]
         );
-        
+
         res.json({
             success: true,
             warehouses: result.rows
@@ -53,40 +53,40 @@ exports.createWarehouse = async (req, res) => {
     const client = await pool.connect();
     try {
         const { shop_id, address } = req.body;
-        
+
         // 验证权限
         const shopCheck = await client.query(
             'SELECT account_id FROM Shop WHERE shop_id = $1',
             [shop_id]
         );
-        
+
         if (shopCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '店铺不存在' });
         }
-        
+
         if (shopCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限操作' });
         }
-        
+
         // 验证地址格式
         if (!address || !address.province || !address.city || !address.detail) {
-            return res.status(400).json({ 
-                success: false, 
-                message: '地址信息不完整，需要包含省、市、详细地址' 
+            return res.status(400).json({
+                success: false,
+                message: '地址信息不完整，需要包含省、市、详细地址'
             });
         }
-        
+
         await client.query('BEGIN');
-        
+
         const result = await client.query(
-            `INSERT INTO warehouse (shop_id, address) 
-             VALUES ($1, $2) 
+            `INSERT INTO warehouse (shop_id, address)
+             VALUES ($1, $2)
              RETURNING *`,
             [shop_id, JSON.stringify(address)]
         );
-        
+
         await client.query('COMMIT');
-        
+
         res.json({
             success: true,
             message: '仓库创建成功',
@@ -109,36 +109,36 @@ exports.updateWarehouse = async (req, res) => {
     try {
         const { code } = req.params;
         const { address } = req.body;
-        
+
         // 验证权限
         const warehouseCheck = await client.query(
-            `SELECT w.shop_id, s.account_id 
+            `SELECT w.shop_id, s.account_id
              FROM warehouse w
              JOIN Shop s ON s.shop_id = w.shop_id
              WHERE w.code = $1`,
             [code]
         );
-        
+
         if (warehouseCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '仓库不存在' });
         }
-        
+
         if (warehouseCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限操作' });
         }
-        
+
         await client.query('BEGIN');
-        
+
         const result = await client.query(
-            `UPDATE warehouse 
-             SET address = $1 
-             WHERE code = $2 
+            `UPDATE warehouse
+             SET address = $1
+             WHERE code = $2
              RETURNING *`,
             [JSON.stringify(address), code]
         );
-        
+
         await client.query('COMMIT');
-        
+
         res.json({
             success: true,
             message: '仓库信息更新成功',
@@ -160,31 +160,31 @@ exports.deleteWarehouse = async (req, res) => {
     const client = await pool.connect();
     try {
         const { code } = req.params;
-        
+
         // 验证权限
         const warehouseCheck = await client.query(
-            `SELECT w.shop_id, s.account_id 
+            `SELECT w.shop_id, s.account_id
              FROM warehouse w
              JOIN Shop s ON s.shop_id = w.shop_id
              WHERE w.code = $1`,
             [code]
         );
-        
+
         if (warehouseCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '仓库不存在' });
         }
-        
+
         if (warehouseCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限操作' });
         }
-        
+
         await client.query('BEGIN');
-        
+
         // 删除仓库（会级联删除库存记录）
         await client.query('DELETE FROM warehouse WHERE code = $1', [code]);
-        
+
         await client.query('COMMIT');
-        
+
         res.json({
             success: true,
             message: '仓库删除成功'
@@ -204,26 +204,26 @@ exports.deleteWarehouse = async (req, res) => {
 exports.getWarehouseStock = async (req, res) => {
     try {
         const { code } = req.params;
-        
+
         // 验证权限
         const warehouseCheck = await pool.query(
-            `SELECT w.shop_id, s.account_id 
+            `SELECT w.shop_id, s.account_id
              FROM warehouse w
              JOIN Shop s ON s.shop_id = w.shop_id
              WHERE w.code = $1`,
             [code]
         );
-        
+
         if (warehouseCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '仓库不存在' });
         }
-        
+
         if (warehouseCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限访问' });
         }
-        
+
         const result = await pool.query(
-            `SELECT 
+            `SELECT
                 ws.sku_id,
                 ws.stock,
                 k.barcode,
@@ -248,7 +248,7 @@ exports.getWarehouseStock = async (req, res) => {
             ORDER BY spu.name, ws.sku_id`,
             [code]
         );
-        
+
         res.json({
             success: true,
             stock: result.rows
@@ -267,47 +267,68 @@ exports.updateStock = async (req, res) => {
     try {
         const { code, sku_id } = req.params;
         const { stock, operation } = req.body;
-        
+
         if (stock < 0) {
             return res.status(400).json({ success: false, message: '库存不能为负数' });
         }
-        
+
         let op_stock = stock;
-        if(operation =='subtract') op_stock = -stock;
+        if (operation === 'subtract') op_stock = -stock;
 
         // 验证权限
         const warehouseCheck = await client.query(
-            `SELECT w.shop_id, s.account_id 
+            `SELECT w.shop_id, s.account_id
              FROM warehouse w
              JOIN Shop s ON s.shop_id = w.shop_id
              WHERE w.code = $1`,
             [code]
         );
-        
+
         if (warehouseCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '仓库不存在' });
         }
-        
+
         if (warehouseCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限操作' });
         }
-        
+
         await client.query('BEGIN');
-        
-        // 使用 UPSERT 插入或更新库存
-        const result = await client.query(
+
+        // 1) 先尝试 UPDATE
+        const updateResult = await client.query(
             `
-            SELECT * FROM upsert_warehouse_stock($1, $2, $3) 
+            UPDATE warehousestock
+            SET stock = GREATEST(stock + $3::int, 0)
+            WHERE code = $1::int AND sku_id = $2::int
+            RETURNING code, sku_id, stock
             `,
             [code, sku_id, op_stock]
         );
-        
+
+        let row;
+
+        if (updateResult.rows.length > 0) {
+            // 已存在记录，更新成功
+            row = updateResult.rows[0];
+        } else {
+            // 2) 不存在记录，执行 INSERT
+            const insertResult = await client.query(
+                `
+                INSERT INTO warehousestock (code, sku_id, stock)
+                VALUES ($1::int, $2::int, GREATEST($3::int, 0))
+                RETURNING code, sku_id, stock
+                `,
+                [code, sku_id, op_stock]
+            );
+            row = insertResult.rows[0];
+        }
+
         await client.query('COMMIT');
-        
+
         res.json({
             success: true,
             message: '库存更新成功',
-            stock: result.rows[0]
+            stock: row
         });
     } catch (error) {
         await client.query('ROLLBACK');
@@ -326,39 +347,66 @@ exports.batchUpdateStock = async (req, res) => {
     try {
         const { code } = req.params;
         const { items } = req.body; // [{ sku_id, stock }, ...]
-        
+
         if (!Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ success: false, message: '无效的入库数据' });
         }
-        
+
         // 验证权限
         const warehouseCheck = await client.query(
-            `SELECT w.shop_id, s.account_id 
+            `SELECT w.shop_id, s.account_id
              FROM warehouse w
              JOIN Shop s ON s.shop_id = w.shop_id
              WHERE w.code = $1`,
             [code]
         );
-        
+
         if (warehouseCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: '仓库不存在' });
         }
-        
+
         if (warehouseCheck.rows[0].account_id !== req.user.id) {
             return res.status(403).json({ success: false, message: '无权限操作' });
         }
-        
+
         await client.query('BEGIN');
-        
+
         for (const item of items) {
-            await client.query(
-                `SELECT * FROM upsert_warehouse_stock($1, $2, $3)`,
+            // 简单校验一下
+            if (!item || typeof item.sku_id === 'undefined' || typeof item.stock !== 'number') {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ success: false, message: '入库数据格式错误' });
+            }
+            if (item.stock <= 0) {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ success: false, message: '入库数量必须为正数' });
+            }
+
+            // 1) 先 UPDATE
+            const updateResult = await client.query(
+                `
+                UPDATE warehousestock
+                SET stock = GREATEST(stock + $3::int, 0)
+                WHERE code = $1::int AND sku_id = $2::int
+                RETURNING code, sku_id, stock
+                `,
                 [code, item.sku_id, item.stock]
             );
+
+            if (updateResult.rows.length === 0) {
+                // 2) 不存在则 INSERT
+                await client.query(
+                    `
+                    INSERT INTO warehousestock (code, sku_id, stock)
+                    VALUES ($1::int, $2::int, GREATEST($3::int, 0))
+                    `,
+                    [code, item.sku_id, item.stock]
+                );
+            }
         }
-        
+
         await client.query('COMMIT');
-        
+
         res.json({
             success: true,
             message: `成功入库 ${items.length} 个商品`
