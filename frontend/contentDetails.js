@@ -15,7 +15,7 @@ if (!productId) {
 }
 
 // ==================== 创建商品详情 DOM ====================
-// TODO: 发货地址显示 
+// TODO: 发货地址显示
 function dynamicContentDetails(req) {
     const product = req.product;
     const mainContainer = document.getElementById('containerProduct');
@@ -72,11 +72,11 @@ function dynamicContentDetails(req) {
     // 获取价格范围
     let minPrice = product.now_price || 0;
     let maxPrice = product.origin_price || 0;
-    
+
     if (product.skus && product.skus.length > 0) {
         const prices = product.skus.map(sku => parseFloat(sku.now_price));
         minPrice = Math.min(...prices);
-        
+
         const originPrices = product.skus.map(sku => parseFloat(sku.origin_price));
         maxPrice = Math.max(...originPrices);
     }
@@ -100,9 +100,9 @@ function dynamicContentDetails(req) {
     const stockDiv = document.createElement('div');
     stockDiv.id = 'stockDiv';
     stockDiv.className = 'stock-section';
-    const totalStock = product.skus ? 
+    const totalStock = product.skus ?
         product.skus.reduce((sum, sku) => sum + (parseInt(sku.stock) || 0), 0) : 0;
-    
+
     stockDiv.innerHTML = `
         <span class="stock-label">库存:</span>
         <span class="stock-value ${totalStock === 0 ? 'out-of-stock' : ''}">${totalStock}</span>
@@ -189,7 +189,7 @@ function dynamicContentDetails(req) {
                         console.log('按钮已禁用，无法点击');
                         return;
                     }
-                    
+
                     if(this.classList.contains('active')) {
                         this.classList.remove('active');
                         console.log('取消了属性:', {
@@ -213,19 +213,19 @@ function dynamicContentDetails(req) {
                         this.classList.add('active');
                         // 更新选中的属性
                         selectedAttributes[this.dataset.attrId] = this.dataset.valueId;
-                        
+
                         console.log('选择了属性:', {
                             attr_id: this.dataset.attrId,
                             value_id: this.dataset.valueId,
                             text: this.textContent,
                             allSelected: selectedAttributes
                         });
-                        
+
                         // 更新其他属性按钮的可用状态
                         updateAttributeButtons();
-                        
+
                         // 查找匹配的 SKU
-                        if(Object.keys(selectedAttributes).length === Object.keys(attributeButtons).length) 
+                        if(Object.keys(selectedAttributes).length === Object.keys(attributeButtons).length)
                             updateSelectedSku();
                         else resetPriceAndStock();
                     }
@@ -244,27 +244,27 @@ function dynamicContentDetails(req) {
     // 重置价格和库存为范围显示
     function resetPriceAndStock() {
         console.log('重置价格和库存显示...');
-        
+
         // 重置价格为价格范围
         const priceElement = document.getElementById('currentPrice');
         if (priceElement && product.skus && product.skus.length > 0) {
             const prices = product.skus.map(sku => parseFloat(sku.now_price));
             const minPrice = Math.min(...prices);
             const maxPrice = Math.max(...prices);
-            
+
             if (minPrice === maxPrice) {
                 priceElement.textContent = `¥${minPrice}`;
             } else {
                 priceElement.textContent = `¥${minPrice} - ¥${maxPrice}`;
             }
         }
-        
+
         // 重置原价
         const originalPriceElement = document.querySelector('.original-price');
         if (originalPriceElement && product.skus && product.skus.length > 0) {
             const originPrices = product.skus.map(sku => parseFloat(sku.origin_price));
             const maxOriginPrice = Math.max(...originPrices);
-            
+
             if (maxOriginPrice > Math.min(...product.skus.map(sku => parseFloat(sku.now_price)))) {
                 originalPriceElement.textContent = `¥${maxOriginPrice}`;
                 originalPriceElement.style.display = 'inline';
@@ -272,25 +272,25 @@ function dynamicContentDetails(req) {
                 originalPriceElement.style.display = 'none';
             }
         }
-        
+
         // 重置库存为总库存
         const stockElement = document.getElementById('stockDiv');
         if (stockElement) {
-            const totalStock = product.skus ? 
+            const totalStock = product.skus ?
                 product.skus.reduce((sum, sku) => sum + (parseInt(sku.stock) || 0), 0) : 0;
-            
+
             stockElement.innerHTML = `
                 <span class="stock-label">库存:</span>
                 <span class="stock-value ${totalStock === 0 ? 'out-of-stock' : ''}">${totalStock}</span>
             `;
         }
-        
+
         // 重置"加入购物车"按钮
         const addToCartBtn = document.querySelector('.add-to-cart-btn');
         if (addToCartBtn) {
-            const totalStock = product.skus ? 
+            const totalStock = product.skus ?
                 product.skus.reduce((sum, sku) => sum + (parseInt(sku.stock) || 0), 0) : 0;
-            
+
             if (totalStock === 0) {
                 addToCartBtn.disabled = true;
                 addToCartBtn.textContent = '已售罄';
@@ -343,7 +343,7 @@ function dynamicContentDetails(req) {
                     isAvailable = Array.from(availableSkuCombinations).some(tuple => {
                         const tupleValues = tuple.split(',');
                         // 检查是否包含所有已选属性值和当前测试值
-                        return Object.values(testAttributes).every(valId => 
+                        return Object.values(testAttributes).every(valId =>
                             tupleValues.includes(valId)
                         );
                     });
@@ -501,7 +501,7 @@ function dynamicContentDetails(req) {
     const addToCartButton = document.createElement('button');
     addToCartButton.className = 'add-to-cart-btn';
     addToCartButton.textContent = '加入购物车';
-    
+
     if (totalStock === 0) {
         addToCartButton.disabled = true;
         addToCartButton.textContent = '已售罄';
@@ -517,6 +517,22 @@ function dynamicContentDetails(req) {
     };
 
     buttonDiv.appendChild(addToCartButton);
+
+    const favButton = document.createElement('button');
+    favButton.className = 'fav-btn';
+    favButton.textContent = '收藏';
+    favButton.onclick = async function () {
+        if (!selectedSkuId) {
+            alert('请先选择完整的商品规格再收藏');
+            return;
+        }
+        await toggleFavorite(selectedSkuId, favButton);
+    };
+    buttonDiv.appendChild(favButton);
+
+    if (selectedSkuId) {
+        initFavoriteStatus(selectedSkuId, favButton);
+    }
 
     // ========== 组装 DOM ==========
     containerD.appendChild(h4);
@@ -534,7 +550,7 @@ async function addToCart(skuId, productName, now_price) {
     try {
         // 检查用户是否登录
         const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-        
+
         if (!token) {
             if (confirm('您还未登录，是否前往登录页面?')) {
                 window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
@@ -556,7 +572,7 @@ async function addToCart(skuId, productName, now_price) {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer ' + token
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 sku_id: skuId,
                 quantity: 1,
                 price: now_price
@@ -564,17 +580,17 @@ async function addToCart(skuId, productName, now_price) {
         });
 
         const result = await response.json();
-        
+
         // 恢复按钮状态
         addToCartBtn.disabled = false;
         addToCartBtn.textContent = originalText;
-        
+
         if (result.success) {
             console.log('加入购物车成功:', result);
-            
+
             // 显示成功提示
             showNotification('✅ ' + result.message, 'success');
-            
+
             // 询问是否前往购物车
             if (confirm(`${productName} 已添加到购物车\n是否立即查看购物车?`)) {
                 window.location.href = 'cart.html';
@@ -582,7 +598,7 @@ async function addToCart(skuId, productName, now_price) {
         } else {
             console.error('加入购物车失败:', result.message);
             showNotification('❌ ' + result.message, 'error');
-            
+
             // 如果是库存不足，可以提供更多信息
             if (result.message.includes('库存不足')) {
                 alert(result.message);
@@ -591,7 +607,7 @@ async function addToCart(skuId, productName, now_price) {
     } catch (error) {
         console.error('加入购物车时发生错误:', error);
         showNotification('❌ 加入购物车时发生错误', 'error');
-        
+
         // 恢复按钮状态
         const addToCartBtn = document.querySelector('.add-to-cart-btn');
         if (addToCartBtn) {
@@ -601,21 +617,113 @@ async function addToCart(skuId, productName, now_price) {
     }
 }
 
+// ==================== 检查并初始化收藏状态 ====================
+async function initFavoriteStatus(skuId, buttonEl) {
+    try {
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+        if (!token) {
+            // 未登录就保持默认“收藏”状态，不做请求
+            return;
+        }
+
+        const res = await fetch(`${API_BASE_URL}/user/favorites/${skuId}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+
+        if (!res.ok) {
+            console.warn('检查收藏状态失败: HTTP', res.status);
+            return;
+        }
+
+        const data = await res.json();
+        if (!data.success) return;
+
+        if (data.isFavorite) {
+            buttonEl.classList.add('active');
+            buttonEl.textContent = '已收藏';
+        } else {
+            buttonEl.classList.remove('active');
+            buttonEl.textContent = '收藏';
+        }
+    } catch (err) {
+        console.error('初始化收藏状态失败:', err);
+    }
+}
+
+// ==================== 收藏/取消收藏 ====================
+async function toggleFavorite(skuId, buttonEl) {
+    try {
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+        if (!token) {
+            if (confirm('您还未登录，是否前往登录页面?')) {
+                window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.href);
+            }
+            return;
+        }
+
+        const isActive = buttonEl.classList.contains('active');
+        const method = isActive ? 'DELETE' : 'POST';
+        const base = `${API_BASE_URL}/user`;
+        const url = isActive
+            ? `${base}/favorites/${skuId}`
+            : `${base}/favorites`;
+
+        buttonEl.disabled = true;
+        const originalText = buttonEl.textContent;
+        buttonEl.textContent = isActive ? '取消中...' : '收藏中...';
+
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: isActive ? null : JSON.stringify({ sku_id: skuId })
+        });
+
+        const data = await res.json();
+
+        buttonEl.disabled = false;
+        buttonEl.textContent = originalText;
+
+        if (!data.success) {
+            alert(data.message || '操作失败');
+            return;
+        }
+
+        buttonEl.classList.toggle('active');
+        buttonEl.textContent = buttonEl.classList.contains('active') ? '已收藏' : '收藏';
+
+        showNotification(
+            (buttonEl.classList.contains('active') ? '已加入收藏' : '已取消收藏'),
+            'success'
+        );
+    } catch (err) {
+        console.error('收藏操作失败:', err);
+        buttonEl.disabled = false;
+        buttonEl.textContent = '收藏';
+        showNotification('收藏操作失败', 'error');
+    }
+}
+
 // 显示通知
 function showNotification(message, type = 'info') {
     // 创建通知元素
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;
     notification.textContent = message;
-    
+
     // 添加到页面
     document.body.appendChild(notification);
-    
+
     // 显示动画
     setTimeout(() => {
         notification.classList.add('show');
     }, 10);
-    
+
     // 3秒后自动消失
     setTimeout(() => {
         notification.classList.remove('show');
@@ -628,22 +736,22 @@ function showNotification(message, type = 'info') {
 // ==================== 后端调用 ====================
 async function fetchProductDetails() {
     const mainContainer = document.getElementById('containerProduct');
-    
+
     if (!mainContainer) {
         console.error('找不到 containerProduct 元素');
         return;
     }
-    
+
     mainContainer.innerHTML = '<div class="loading">加载中...</div>';
-    
+
     try {
         console.log('开始获取商品详情...');
         const response = await fetch(`${API_BASE_URL}/products/${productId}`);
-        
+
         if (response.ok) {
             const data = await response.json();
             console.log('商品详情:', data);
-            
+
             if (data.success && data.product) {
                 dynamicContentDetails(data);
             } else {

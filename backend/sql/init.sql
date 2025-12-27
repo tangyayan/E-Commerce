@@ -186,16 +186,16 @@ CREATE OR REPLACE FUNCTION upsert_warehouse_stock(
 RETURNS TABLE(code INT, sku_id INT, stock INT) AS $$
 BEGIN
     -- 尝试更新
-    UPDATE WarehouseStock 
+    UPDATE WarehouseStock
     SET stock = stock + p_stock
     WHERE WarehouseStock.code = p_code AND WarehouseStock.sku_id = p_sku_id;
-    
+
     -- 如果没有更新到，则插入
     IF NOT FOUND THEN
         INSERT INTO WarehouseStock (code, sku_id, stock)
         VALUES (p_code, p_sku_id, p_stock);
     END IF;
-    
+
     -- 返回结果
     RETURN QUERY
     SELECT ws.code, ws.sku_id, ws.stock
@@ -255,4 +255,14 @@ CREATE TABLE IF NOT EXISTS Review (
     rating INT CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+--收藏夹
+CREATE TABLE favorite (
+    account_id  INTEGER NOT NULL,
+    sku_id  INTEGER NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (account_id, sku_id),
+    FOREIGN KEY (account_id) REFERENCES account(account_id) ON DELETE CASCADE,
+    FOREIGN KEY (sku_id) REFERENCES SKU(sku_id) ON DELETE CASCADE
 );

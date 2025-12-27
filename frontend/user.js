@@ -60,6 +60,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderUserPage(userResult.user, null, addressResult.addresses || []);
         }
 
+        await loadFavorites();
+
     } catch (error) {
         console.error('加载用户信息失败:', error);
         userContainer.innerHTML = `
@@ -196,7 +198,15 @@ function renderUserPage(user, shop, addresses) {
                     </div>
                 </div>
             </div>
-
+            <!-- 我的收藏部分 -->
+            <div class="favorites-section">
+                <div class="section-header">
+                    <h2>我的收藏</h2>
+                </div>
+                <div id="favoritesContainer">
+                    <div class="loading">加载中...</div>
+                </div>
+            </div>
             <!-- 收货地址部分 -->
             <div class="address-section">
                 <div class="section-header">
@@ -447,3 +457,110 @@ window.onclick = function(event) {
         closeAddressModal();
     }
 };
+
+/**
+ * 加载用户收藏
+ */
+async function loadFavorites() {
+    const container = document.getElementById('favoritesContainer');
+    if (!container) return;
+
+    const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+
+    container.innerHTML = '<div class="loading">加载中...</div>';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/user/favorites`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            }
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            container.innerHTML = '<p>加载收藏失败：' + (data.message || '') + '</p>';
+            return;
+        }
+
+        const list = data.favorites;
+        if (!list || list.length === 0) {
+            container.innerHTML = `
+                <div class="fav-empty">
+                    <i class="fas fa-heart-broken"></i>
+                    <p>暂无收藏商品</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="fav-list">
+                ${list.map(item => `
+                    <div class="fav-item">
+                        <!-- 整个内容区域可点击，跳转到对应商品详情页 -->
+                        <a class="fav-link" href="contentDetails.html?id=${item.spu_id}">
+                            <div class="fav-thumb">
+                                <img src="${item.image_url || 'img/default.png'}" alt="${item.spu_name || ''}">
+                            </div>
+                            <div class="fav-info">
+                                <div class="fav-title" title="${item.spu_name || ''}">
+                                    ${item.spu_name || ('SKU ' + item.sku_id)}
+                                </div>
+                                <div class="fav-price">
+                                    <span class="price-now">￥${item.now_price ?? ''}</span>
+                                    ${item.origin_price
+                                        ? `<span class="price-origin">￥${item.origin_price}</span>`
+                                        : ''}
+                                </div>
+                            </div>
+                        </a>
+                        <!-- 右侧独立的取消收藏按钮 -->
+                        <button class="fav-cancel-btn" data-sku-id="${item.sku_id}">
+                            取消收藏
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        console.error('加载收藏失败:', e);
+        container.innerHTML = '<p>加载收藏失败</p>';
+    }
+}
+
+// 取消收藏按钮
+document.addEventListener('click', async (e) => {
+    const t = e.target;
+    if (t.classList.contains('fav-cancel-btn')) {
+        const skuId = t.getAttribute('data-sku-id');
+        const token = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+
+        const card = t.closest('.fav-item');
+        const titleEl = card ? card.querySelector('.fav-title') : null;
+        const title = titleEl ? titleEl.textContent.trim() : `SKU ${skuId}`;
+
+        const ok = confirm(`确定要取消收藏【${title}】吗？`);
+        if (!ok) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/user/favorites/${skuId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            const data = await res.json();
+            if (!data.success) {
+                alert(data.message || '取消收藏失败');
+                return;
+            }
+            // 从页面移除该收藏项
+            t.closest('.fav-item').remove();
+        } catch (err) {
+            console.error(err);
+            alert('网络错误');
+        }
+    }
+});

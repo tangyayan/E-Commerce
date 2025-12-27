@@ -223,20 +223,20 @@ body {
         margin-top: 100px;
         padding: 15px;
     }
-    
+
     #userContainer h1 {
         font-size: 24px;
     }
-    
+
     .user-card {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .user-avatar {
         font-size: 60px;
     }
-    
+
     .shop-header {
         flex-direction: column;
         gap: 10px;
@@ -248,11 +248,11 @@ body {
         margin-top: 90px;
         padding: 10px;
     }
-    
+
     .user-card, .shop-card {
         padding: 20px;
     }
-    
+
     .btn-primary, .btn-secondary {
         width: 100%;
         margin-right: 0;
@@ -489,30 +489,30 @@ body {
     .addresses-list {
         grid-template-columns: 1fr;
     }
-    
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .section-header button {
         width: 100%;
     }
-    
+
     .modal-content {
         margin: 10% auto;
         width: 95%;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
     }
-    
+
     .form-actions {
         flex-direction: column;
     }
-    
+
     .form-actions button {
         width: 100%;
     }
@@ -522,18 +522,115 @@ body {
     .address-card {
         padding: 15px;
     }
-    
+
     .address-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
     }
-    
+
     .address-actions {
         flex-direction: column;
     }
-    
+
     .address-actions button {
         width: 100%;
     }
+}
+
+/* 收藏列表整体 */
+.favorites-section {
+    margin-top: 24px;
+}
+
+.fav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 单个收藏项 */
+.fav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background: #fff;
+}
+
+/* 可点击区域 */
+.fav-link {
+    display: flex;
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* 缩略图 */
+.fav-thumb {
+    width: 64px;
+    height: 64px;
+    margin-right: 12px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #f5f5f5;
+    flex-shrink: 0;
+}
+.fav-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 文本信息 */
+.fav-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.fav-title {
+    font-size: 14px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.fav-price {
+    font-size: 13px;
+}
+.fav-price .price-now {
+    color: #e4393c;
+    font-weight: bold;
+    margin-right: 6px;
+}
+.fav-price .price-origin {
+    color: #999;
+    text-decoration: line-through;
+    font-size: 12px;
+}
+
+/* 取消收藏按钮 */
+.fav-cancel-btn {
+    margin-left: 12px;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: #f7f7f7;
+    cursor: pointer;
+}
+.fav-cancel-btn:hover {
+    background: #f0f0f0;
+}
+
+/* 空状态 */
+.fav-empty {
+    padding: 16px;
+    text-align: center;
+    color: #999;
+}
+.fav-empty i {
+    font-size: 24px;
+    margin-bottom: 8px;
 }
