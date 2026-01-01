@@ -192,18 +192,16 @@ function applyFiltersAndSort() {
     // 3. 名称排序
     if (nameSort) {
         products.sort((a, b) => {
-            const na = (a.name || '').toLowerCase();
-            const nb = (b.name || '').toLowerCase();
-            if (na === nb) return 0;
-            if (nameSort === 'asc') {
-                return na < nb ? -1 : 1;
-            } else {
-                return na > nb ? -1 : 1;
-            }
-        });
-    }
+            const na = String(a.name ?? '');
+            const nb = String(b.name ?? '');
 
-    renderProducts(products);
+            const cmp = na.localeCompare(nb, 'zh-CN', { numeric: true, sensitivity: 'base' });
+
+            return nameSort === 'asc' ? cmp : -cmp;
+        });
+
+        renderProducts(products);
+    }
 }
 
 // ==================== 显示错误信息 ====================
