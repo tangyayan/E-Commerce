@@ -199,9 +199,8 @@ function applyFiltersAndSort() {
 
             return nameSort === 'asc' ? cmp : -cmp;
         });
-
-        renderProducts(products);
     }
+    renderProducts(products);
 }
 
 // ==================== 显示错误信息 ====================
